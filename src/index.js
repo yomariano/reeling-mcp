@@ -270,7 +270,12 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             prompt: {
               type: "string",
               description:
-                "Text description of the video to generate (e.g. 'Cinematic drone shot of a futuristic neon city at sunset, 4k ultra detailed').",
+                "Text description of the video to generate (e.g. 'Cinematic drone shot of a futuristic neon city at sunset, 4k ultra detailed'). Optional if image_url is provided.",
+            },
+            image_url: {
+              type: "string",
+              description:
+                "Optional public image URL to animate into a video using image-to-video AI models.",
             },
             aspect_ratio: {
               type: "string",
@@ -441,6 +446,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case "reeling_generate_video": {
         const res = await client.post("/api/ai/generate-video", {
           prompt: args.prompt,
+          imageUrl: args.image_url,
           aspectRatio: args.aspect_ratio || "9:16",
           apiKey: args.fal_api_key,
         });
