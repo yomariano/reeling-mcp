@@ -259,6 +259,38 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
         },
       },
+      {
+        name: "reeling_generate_video",
+        description:
+          "Generate short-form video clips in seconds using fal.ai MiniMax H3 Max and Video-01 text-to-video AI models. Automatically saves the video to Cloudflare R2 storage and returns the public media URL ready for publishing to YouTube, TikTok, Instagram, etc.",
+        inputSchema: {
+          type: "object",
+          required: ["prompt"],
+          properties: {
+            prompt: {
+              type: "string",
+              description:
+                "Text description of the video to generate (e.g. 'Cinematic drone shot of a futuristic neon city at sunset, 4k ultra detailed').",
+            },
+            aspect_ratio: {
+              type: "string",
+              enum: ["9:16", "16:9"],
+              description:
+                "Aspect ratio for the generated video. '9:16' for vertical shorts/reels/tiktok, '16:9' for horizontal youtube.",
+              default: "9:16",
+            },
+            fal_api_key: {
+              type: "string",
+              description:
+                "Optional custom fal.ai API key (BYOK). If omitted, the server default fal.ai key is used.",
+            },
+            api_key: {
+              type: "string",
+              description: "Optional Reeling API key.",
+            },
+          },
+        },
+      },
     ],
   };
 });
@@ -395,6 +427,22 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           prompt: args.topic || args.prompt,
           tone: args.tone || "viral",
           platforms: args.platforms || ["tiktok", "instagram", "youtube", "threads", "bluesky"],
+        });
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(res.data, null, 2),
+            },
+          ],
+        };
+      }
+
+      case "reeling_generate_video": {
+        const res = await client.post("/api/ai/generate-video", {
+          prompt: args.prompt,
+          aspectRatio: args.aspect_ratio || "9:16",
+          apiKey: args.fal_api_key,
         });
         return {
           content: [
