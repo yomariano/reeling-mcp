@@ -296,6 +296,77 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
         },
       },
+      {
+        name: "reeling_create_storyboard",
+        description:
+          "Generate an AI multi-scene storyboard (from 30 seconds up to 5 minutes) broken into sequential 5-second cinematic cuts with timecodes, scene titles, camera movements, and audio/foley cues.",
+        inputSchema: {
+          type: "object",
+          required: ["topic"],
+          properties: {
+            topic: {
+              type: "string",
+              description:
+                "Video topic, narrative concept, or full script to break into storyboard scenes.",
+            },
+            duration_seconds: {
+              type: "number",
+              description:
+                "Target total duration in seconds (e.g. 30, 60, 120, 180, 300). Default is 30.",
+              default: 30,
+            },
+            style: {
+              type: "string",
+              description: "Visual style preference (e.g. 'Cinematic', 'Photoreal', 'Cyberpunk', 'Anime').",
+            },
+            camera: {
+              type: "string",
+              description: "Camera motion preference (e.g. 'FPV Chase', 'Smooth Tracking', 'Macro Close-Up').",
+            },
+            api_key: {
+              type: "string",
+              description: "Optional Reeling API key.",
+            },
+          },
+        },
+      },
+      {
+        name: "reeling_stitch_storyboard",
+        description:
+          "Render each scene in a storyboard via fal.ai MiniMax H3 and stitch them into a single continuous MP4 video with FFmpeg, uploading the final result to Cloudflare R2 storage.",
+        inputSchema: {
+          type: "object",
+          required: ["scenes"],
+          properties: {
+            scenes: {
+              type: "array",
+              description: "Array of storyboard scene objects with 'prompt' (and optional 'videoUrl').",
+              items: {
+                type: "object",
+                required: ["prompt"],
+                properties: {
+                  prompt: { type: "string" },
+                  videoUrl: { type: "string" },
+                  title: { type: "string" },
+                },
+              },
+            },
+            aspect_ratio: {
+              type: "string",
+              enum: ["9:16", "16:9"],
+              default: "9:16",
+            },
+            fal_api_key: {
+              type: "string",
+              description: "Optional custom fal.ai API key (BYOK).",
+            },
+            api_key: {
+              type: "string",
+              description: "Optional Reeling API key.",
+            },
+          },
+        },
+      },
     ],
   };
 });
@@ -447,6 +518,39 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const res = await client.post("/api/ai/generate-video", {
           prompt: args.prompt,
           imageUrl: args.image_url,
+          aspectRatio: args.aspect_ratio || "9:16",
+          apiKey: args.fal_api_key,
+        });
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(res.data, null, 2),
+            },
+          ],
+        };
+      }
+
+      case "reeling_create_storyboard": {
+        const res = await client.post("/api/ai/storyboard/create", {
+          topic: args.topic,
+          durationSeconds: args.duration_seconds || 30,
+          style: args.style,
+          camera: args.camera,
+        });
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(res.data, null, 2),
+            },
+          ],
+        };
+      }
+
+      case "reeling_stitch_storyboard": {
+        const res = await client.post("/api/ai/storyboard/stitch", {
+          scenes: args.scenes,
           aspectRatio: args.aspect_ratio || "9:16",
           apiKey: args.fal_api_key,
         });

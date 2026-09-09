@@ -34,6 +34,8 @@ With `reeling-mcp`, your AI coding assistants and agents (Claude Desktop, Cursor
 | `reeling_reply_to_comment` | Posts a direct reply to a comment on any connected social platform. |
 | `reeling_adapt_content_ai` | Uses Reeling's AI copy engine to adapt a hook/script for TikTok, Instagram, YouTube, Threads, or Bluesky. |
 | `reeling_generate_video` | Generates short-form video clips in seconds with fal.ai MiniMax H3 Max AI models and saves them directly to Reeling storage. |
+| `reeling_create_storyboard` | Generates structured multi-scene storyboards (30s up to 5 minutes) broken into consecutive 5s cinematic cuts with audio/foley cues. |
+| `reeling_stitch_storyboard` | Renders storyboard scenes via MiniMax H3 and stitches them into a continuous MP4 video with FFmpeg, uploading to R2 storage. |
 
 ---
 
