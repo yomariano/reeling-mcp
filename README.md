@@ -33,6 +33,7 @@ With `reeling-mcp`, your AI coding assistants and agents (Claude Desktop, Cursor
 | `reeling_get_inbox` | Retrieves audience comments across social channels into a unified inbox. |
 | `reeling_reply_to_comment` | Posts a direct reply to a comment on any connected social platform. |
 | `reeling_adapt_content_ai` | Uses Reeling's AI copy engine to adapt a hook/script for TikTok, Instagram, YouTube, Threads, or Bluesky. |
+| `reeling_generate_video` | Generates short-form video clips in seconds with fal.ai MiniMax H3 Max AI models and saves them directly to Reeling storage. |
 
 ---
 
