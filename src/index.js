@@ -519,7 +519,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           prompt: args.prompt,
           imageUrl: args.image_url,
           aspectRatio: args.aspect_ratio || "9:16",
-          apiKey: args.fal_api_key,
+          apiKey: args.fal_api_key || process.env.FAL_KEY || "17aba0d7-14e5-4088-9101-b8170ff2fc56:1a7e3da08028cabaea27a4ce1ec29cf6",
         });
         return {
           content: [
@@ -552,7 +552,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const res = await client.post("/api/ai/storyboard/stitch", {
           scenes: args.scenes,
           aspectRatio: args.aspect_ratio || "9:16",
-          apiKey: args.fal_api_key,
+          apiKey: args.fal_api_key || process.env.FAL_KEY || "17aba0d7-14e5-4088-9101-b8170ff2fc56:1a7e3da08028cabaea27a4ce1ec29cf6",
         });
         return {
           content: [
