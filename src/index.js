@@ -183,6 +183,24 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
+        name: "reeling_evaluate_content_jev",
+        description:
+          "Run a Type-Safe JEV (Judgment & Evaluation Vector) diagnostic on published post metrics. Evaluates 0-3s hook velocity, cognitive concept fit, visual/code density, engagement triggers, and drop-off causes with Zod schema validation, returning actionable content prescriptions for future generations.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            force_fresh: {
+              type: "boolean",
+              description: "Whether to re-evaluate directly against live post metrics rather than using cached evaluation.",
+            },
+            api_key: {
+              type: "string",
+              description: "Optional Reeling API key.",
+            },
+          },
+        },
+      },
+      {
         name: "reeling_get_inbox",
         description:
           "Fetch the unified social inbox containing audience comments and feedback across YouTube, Bluesky, Instagram, Threads, and TikTok.",
@@ -456,6 +474,20 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case "reeling_sync_metrics": {
         const res = await client.post("/api/analytics/sync", {
           postId: args.post_id,
+        });
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(res.data, null, 2),
+            },
+          ],
+        };
+      }
+
+      case "reeling_evaluate_content_jev": {
+        const res = await client.post("/api/analytics/insights/jev/evaluate", {
+          forceFresh: Boolean(args.force_fresh),
         });
         return {
           content: [
