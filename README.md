@@ -25,7 +25,8 @@ With `reeling-mcp`, your AI coding assistants and agents (Claude Desktop, Cursor
 | Tool Name | Description |
 |---|---|
 | `reeling_list_projects` | Lists all projects & workspaces in your Reeling account. |
-| `reeling_list_channels` | Lists all connected channels (YouTube, Bluesky, TikTok, Instagram, Threads, etc.) with handle names and account status. |
+| `reeling_list_channels` | Lists all connected channels (YouTube, Bluesky, TikTok, Instagram, Threads, Pinterest, etc.) with handle names and account status. |
+| `reeling_get_channel_options` | Retrieves publishing options for a connected channel, such as Pinterest boards (ID, name, privacy) or TikTok creator options. |
 | `reeling_publish_post` | Publishes or schedules short-form video posts simultaneously to targeted platforms. |
 | `reeling_get_post_status` | Checks delivery, processing, and publishing status for a specific post. |
 | `reeling_get_analytics` | Fetches aggregated analytics: total views, likes, comments, impressions, and per-platform breakdown. |

@@ -102,6 +102,21 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description:
                 "Publicly accessible URL of the video file to publish (MP4, MOV, WebM).",
             },
+            thumbnail_url: {
+              type: "string",
+              description:
+                "Optional URL to a custom JPEG, PNG, or WebP thumbnail image.",
+            },
+            pinterest_board_id: {
+              type: "string",
+              description:
+                "Optional Pinterest board ID to pin to. If omitted, uses default board or auto-creates 'Reeling Videos'.",
+            },
+            pinterest_link: {
+              type: "string",
+              description:
+                "Optional destination link for Pinterest Pin.",
+            },
             title: {
               type: "string",
               description:
@@ -115,6 +130,25 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             project_id: {
               type: "string",
               description: "Optional project ID to associate with the post.",
+            },
+            api_key: {
+              type: "string",
+              description: "Optional Reeling API key.",
+            },
+          },
+        },
+      },
+      {
+        name: "reeling_get_channel_options",
+        description:
+          "Retrieve publishing options for a connected channel, such as Pinterest boards (ID, name, privacy) or TikTok creator configurations.",
+        inputSchema: {
+          type: "object",
+          required: ["channel_id"],
+          properties: {
+            channel_id: {
+              type: "string",
+              description: "UUID of the connected channel (from reeling_list_channels).",
             },
             api_key: {
               type: "string",
@@ -425,13 +459,31 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case "reeling_publish_post": {
         const payload = {
           content: args.content,
+          caption: args.caption || args.content,
           platforms: args.platforms,
           video_url: args.video_url,
+          thumbnail_url: args.thumbnail_url,
           title: args.title,
-          scheduled_at: args.scheduled_at,
+          pinterest_board_id: args.pinterest_board_id,
+          pinterest_link: args.pinterest_link,
+          pinterest: args.pinterest,
+          scheduled_for: args.scheduled_at || args.scheduled_for,
+          scheduled_at: args.scheduled_at || args.scheduled_for,
           project_id: args.project_id,
         };
         const res = await client.post("/api/v1/publish", payload);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(res.data, null, 2),
+            },
+          ],
+        };
+      }
+
+      case "reeling_get_channel_options": {
+        const res = await client.get(`/api/v1/channels/${args.channel_id}/options`);
         return {
           content: [
             {
