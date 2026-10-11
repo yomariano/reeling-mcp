@@ -1,0 +1,20 @@
+# Smithery configuration for reeling-mcp
+# https://smithery.ai/docs/config#smitheryyaml
+
+startCommand:
+  type: stdio
+  config:
+    command: npx
+    args:
+      - -y
+      - github:yomariano/reeling-mcp
+    env:
+      REELING_API_KEY:
+        type: string
+        description: "Your secret Reeling API key from https://reeling.app/settings?tab=api"
+        required: true
+      REELING_API_URL:
+        type: string
+        description: "Optional Reeling API base URL"
+        default: "https://api.reeling.app"
+        required: false
