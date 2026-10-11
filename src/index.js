@@ -585,8 +585,7 @@ export async function executeTool(name, args = {}, defaultApiKey = null) {
         const res = await client.post("/api/ai/generate-video", {
           prompt: args.prompt,
           imageUrl: args.image_url,
-          aspectRatio: args.aspect_ratio || "9:16",
-          apiKey: args.fal_api_key || process.env.FAL_KEY || "17aba0d7-14e5-4088-9101-b8170ff2fc56:1a7e3da08028cabaea27a4ce1ec29cf6",
+          apiKey: args.fal_api_key || process.env.FAL_KEY || process.env.FAL_API_KEY || undefined,
         });
         return {
           content: [
@@ -618,8 +617,7 @@ export async function executeTool(name, args = {}, defaultApiKey = null) {
       case "reeling_stitch_storyboard": {
         const res = await client.post("/api/ai/storyboard/stitch", {
           scenes: args.scenes,
-          aspectRatio: args.aspect_ratio || "9:16",
-          apiKey: args.fal_api_key || process.env.FAL_KEY || "17aba0d7-14e5-4088-9101-b8170ff2fc56:1a7e3da08028cabaea27a4ce1ec29cf6",
+          apiKey: args.fal_api_key || process.env.FAL_KEY || process.env.FAL_API_KEY || undefined,
         });
         return {
           content: [
