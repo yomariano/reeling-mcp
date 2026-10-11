@@ -777,8 +777,8 @@ export async function startSseServer(port = 3005, host = "0.0.0.0", defaultApiKe
   });
 }
 
-// Auto-run if executed directly
-if (process.argv[1]?.endsWith("index.js") || process.argv[1]?.endsWith("cli.js")) {
+// Auto-run if executed directly as entrypoint
+if (process.argv[1]?.endsWith("index.js")) {
   const isSse = process.argv.includes("--sse") || process.env.MCP_TRANSPORT === "sse" || Boolean(process.env.PORT);
   const portIndex = process.argv.indexOf("--port");
   const port = portIndex !== -1 ? parseInt(process.argv[portIndex + 1], 10) : (parseInt(process.env.PORT, 10) || 3005);
