@@ -28,7 +28,7 @@ function getClient(overrideKey, fallbackKey) {
       "X-API-Key": key,
       "Authorization": `Bearer ${key}`,
     },
-    timeout: 60000,
+    timeout: 300000,
   });
 }
 
