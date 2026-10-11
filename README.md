@@ -119,6 +119,35 @@ Add to your `~/.gemini/antigravity-cli/mcp_config.json` or project MCP configura
 }
 ```
 
+### 4. Remote Hosted SSE Server (for Grok Bot, Claude Remote, Web Agents)
+You can run `reeling-mcp` as a persistent Server-Sent Events (SSE) server for remote AI agents:
+
+```bash
+# Run locally or deploy to Railway / Render / VPS / Docker
+npx reeling-mcp --sse --port 3005
+```
+
+Endpoints exposed:
+* `GET /health`: Health check status.
+* `GET /sse`: Server-Sent Events connection stream (`?api_key=rl_...` or `X-API-Key` header).
+* `POST /messages?sessionId=...`: JSON-RPC protocol message receiver.
+
+#### Grok Bot Configuration (xAI)
+Add to your Grok Bot custom MCP servers:
+* **Transport**: SSE
+* **Endpoint**: `https://mcp.reeling.app/sse` (or `http://localhost:3005/sse`)
+* **Headers**: `X-API-Key: rl_your_live_api_key_here`
+
+---
+
+## 🤖 ChatGPT, Dots & ElizaOS Integrations
+
+See the `/integrations` directory for ready-to-use packages:
+* **ChatGPT Custom GPT**: `integrations/chatgpt/` (OpenAPI schema & instructions)
+* **xAI Grok Bot Plugin**: `integrations/grokbot/` (Plugin manifest)
+* **ElizaOS Autonomous Agent Plugin**: `integrations/elizaos/` (`@elizaos/plugin-reeling`)
+* **Discord Community Bot**: `integrations/discord/` (Slash commands `/reel`)
+
 ---
 
 ## 🧪 Testing Locally
@@ -129,9 +158,10 @@ You can test the MCP server manually using the MCP inspector:
 npx @modelcontextprotocol/inspector node bin/cli.js
 ```
 
-Or pass `REELING_API_KEY` directly:
+Or test SSE mode:
 ```bash
-REELING_API_KEY="rl_your_key" node bin/cli.js
+node bin/cli.js --sse --port 3005
+curl http://localhost:3005/health
 ```
 
 ---

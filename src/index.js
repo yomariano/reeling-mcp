@@ -1,5 +1,6 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
@@ -12,11 +13,11 @@ dotenv.config();
 const API_URL = (process.env.REELING_API_URL || "https://api.reeling.app").replace(/\/+$/, "");
 const API_KEY = process.env.REELING_API_KEY;
 
-function getClient(overrideKey) {
-  const key = overrideKey || API_KEY;
+function getClient(overrideKey, fallbackKey) {
+  const key = overrideKey || fallbackKey || API_KEY;
   if (!key) {
     throw new Error(
-      "Missing Reeling API key. Set the REELING_API_KEY environment variable or pass api_key parameter."
+      "Missing Reeling API key. Set the REELING_API_KEY environment variable, pass api_key parameter, or authenticate via Bearer token."
     );
   }
 
@@ -31,23 +32,8 @@ function getClient(overrideKey) {
   });
 }
 
-// Create MCP Server instance
-const server = new Server(
-  {
-    name: "reeling-mcp",
-    version: "1.0.0",
-  },
-  {
-    capabilities: {
-      tools: {},
-    },
-  }
-);
-
-// Define tool specifications
-server.setRequestHandler(ListToolsRequestSchema, async () => {
-  return {
-    tools: [
+// Tool specifications list
+export const TOOLS_DEFINITIONS = [
       {
         name: "reeling_list_projects",
         description: "List all projects / workspaces available in your reeling.app account.",
@@ -419,14 +405,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
         },
       },
-    ],
-  };
-});
+];
 
 // Handle tool executions
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  const { name, arguments: args = {} } = request.params;
-  const client = getClient(args.api_key);
+export async function executeTool(name, args = {}, defaultApiKey = null) {
+  const client = getClient(args.api_key, defaultApiKey);
 
   try {
     switch (name) {
@@ -665,18 +648,152 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       ],
     };
   }
-});
+}
 
-// Run server with stdio transport
-export async function runServer() {
+export function createMcpServer(defaultApiKey = null) {
+  const server = new Server(
+    {
+      name: "reeling-mcp",
+      version: "1.0.0",
+    },
+    {
+      capabilities: {
+        tools: {},
+      },
+    }
+  );
+
+  server.setRequestHandler(ListToolsRequestSchema, async () => {
+    return { tools: TOOLS_DEFINITIONS };
+  });
+
+  server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    const { name, arguments: args = {} } = request.params;
+    return executeTool(name, args, defaultApiKey);
+  });
+
+  return server;
+}
+
+// Run server with stdio transport (CLI default)
+export async function runServer(defaultApiKey = null) {
+  const server = createMcpServer(defaultApiKey);
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error("Reeling MCP Server running on stdio");
+  return server;
 }
 
-if (process.argv[1]?.endsWith("index.js") || process.argv[1]?.endsWith("cli.js")) {
-  runServer().catch((err) => {
-    console.error("Fatal error starting Reeling MCP server:", err);
-    process.exit(1);
+// Run server with SSE transport over HTTP
+export async function startSseServer(port = 3005, host = "0.0.0.0", defaultApiKey = null) {
+  const http = await import("node:http");
+  const { URL } = await import("node:url");
+
+  const sessions = new Map();
+
+  const httpServer = http.createServer(async (req, res) => {
+    // Enable CORS for web-based agents (Grok Bot, Claude web, etc.)
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-API-Key");
+
+    if (req.method === "OPTIONS") {
+      res.writeHead(204);
+      res.end();
+      return;
+    }
+
+    const reqUrl = new URL(req.url, `http://${req.headers.host || "localhost"}`);
+    const pathname = reqUrl.pathname;
+
+    if (pathname === "/health") {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(
+        JSON.stringify({
+          status: "ok",
+          server: "reeling-mcp",
+          version: "1.0.0",
+          transport: "sse",
+          activeSessions: sessions.size,
+        })
+      );
+      return;
+    }
+
+    // SSE connection stream endpoint
+    if (pathname === "/sse" && req.method === "GET") {
+      const apiKey =
+        req.headers["x-api-key"] ||
+        (req.headers.authorization?.startsWith("Bearer ")
+          ? req.headers.authorization.slice(7)
+          : null) ||
+        reqUrl.searchParams.get("api_key") ||
+        defaultApiKey;
+
+      const serverInstance = createMcpServer(apiKey);
+      const transport = new SSEServerTransport("/messages", res);
+
+      sessions.set(transport.sessionId, { server: serverInstance, transport });
+
+      transport.onclose = () => {
+        sessions.delete(transport.sessionId);
+      };
+
+      try {
+        await serverInstance.connect(transport);
+      } catch (err) {
+        console.error("Error connecting SSE transport:", err);
+        sessions.delete(transport.sessionId);
+      }
+      return;
+    }
+
+    // JSON-RPC message incoming endpoint
+    if (pathname === "/messages" && req.method === "POST") {
+      const sessionId = reqUrl.searchParams.get("sessionId");
+      if (!sessionId || !sessions.has(sessionId)) {
+        res.writeHead(404, { "Content-Type": "text/plain" });
+        res.end("Session not found or expired. Reconnect via GET /sse");
+        return;
+      }
+
+      const { transport } = sessions.get(sessionId);
+      try {
+        await transport.handlePostMessage(req, res);
+      } catch (err) {
+        console.error("Error handling POST message in SSE session:", err);
+      }
+      return;
+    }
+
+    res.writeHead(404, { "Content-Type": "text/plain" });
+    res.end("Not Found. Reeling MCP server endpoints: GET /health, GET /sse, POST /messages");
   });
+
+  return new Promise((resolve, reject) => {
+    httpServer.listen(port, host, () => {
+      console.log(`Reeling MCP Server running over SSE on http://${host}:${port}/sse`);
+      resolve(httpServer);
+    });
+    httpServer.on("error", reject);
+  });
+}
+
+// Auto-run if executed directly
+if (process.argv[1]?.endsWith("index.js") || process.argv[1]?.endsWith("cli.js")) {
+  const isSse = process.argv.includes("--sse") || process.env.MCP_TRANSPORT === "sse" || Boolean(process.env.PORT);
+  const portIndex = process.argv.indexOf("--port");
+  const port = portIndex !== -1 ? parseInt(process.argv[portIndex + 1], 10) : (parseInt(process.env.PORT, 10) || 3005);
+
+  if (isSse) {
+    startSseServer(port).catch((err) => {
+      console.error("Fatal error starting Reeling MCP SSE server:", err);
+      process.exit(1);
+    });
+  } else {
+    runServer().catch((err) => {
+      console.error("Fatal error starting Reeling MCP stdio server:", err);
+      process.exit(1);
+    });
+  }
 }
