@@ -4,7 +4,7 @@
   "description": "Official Model Context Protocol (MCP) Server for reeling.app",
   "main": "src/index.js",
   "bin": {
-    "reeling-mcp": "./bin/cli.js"
+    "reeling-mcp": "bin/cli.js"
   },
   "type": "module",
   "scripts": {
