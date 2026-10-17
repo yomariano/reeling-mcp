@@ -714,18 +714,95 @@ export async function runServer(defaultApiKey = null) {
   return server;
 }
 
-// Run server with SSE transport over HTTP
+// Run server with Streamable HTTP (/mcp) and SSE (/sse) transport over HTTP
 export async function startSseServer(port = 3005, host = "0.0.0.0", defaultApiKey = null) {
   const http = await import("node:http");
+  const crypto = await import("node:crypto");
   const { URL } = await import("node:url");
 
   const sessions = new Map();
 
+  async function handleJsonRpcMessage(msg, apiKey) {
+    if (!msg || typeof msg !== "object" || msg.jsonrpc !== "2.0") {
+      return {
+        jsonrpc: "2.0",
+        id: msg?.id ?? null,
+        error: { code: -32600, message: "Invalid Request" },
+      };
+    }
+
+    // Notifications (no id) return null so caller can send 202 Accepted
+    if (msg.id === undefined) {
+      return null;
+    }
+
+    const { id, method, params = {} } = msg;
+
+    if (method === "initialize") {
+      const requestedVersion = params?.protocolVersion || "2024-11-05";
+      const supportedVersions = ["2024-11-05", "2025-03-26", "2025-06-18", "2025-11-25"];
+      const protocolVersion = supportedVersions.includes(requestedVersion)
+        ? requestedVersion
+        : "2024-11-05";
+      return {
+        jsonrpc: "2.0",
+        id,
+        result: {
+          protocolVersion,
+          capabilities: {
+            tools: { listChanged: false },
+          },
+          serverInfo: {
+            name: "reeling-mcp",
+            version: "1.0.0",
+          },
+          instructions:
+            "Reeling MCP Server connects AI agents (Grok Bot, ChatGPT, OpenAI Dots, Claude, Cursor) to reeling.app for multi-platform short-form video publishing (TikTok, Instagram Reels, YouTube Shorts, Threads, Bluesky, X, LinkedIn, Pinterest). If a user has not supplied an API key yet, guide them to https://reeling.app/pricing?plan=creator&ref=mcp and https://reeling.app/settings?tab=api.",
+        },
+      };
+    }
+
+    if (method === "ping") {
+      return { jsonrpc: "2.0", id, result: {} };
+    }
+
+    if (method === "tools/list") {
+      return {
+        jsonrpc: "2.0",
+        id,
+        result: {
+          tools: TOOLS_DEFINITIONS,
+        },
+      };
+    }
+
+    if (method === "tools/call") {
+      const toolName = params?.name;
+      const toolArgs = params?.arguments || {};
+      const result = await executeTool(toolName, toolArgs, apiKey);
+      return {
+        jsonrpc: "2.0",
+        id,
+        result,
+      };
+    }
+
+    return {
+      jsonrpc: "2.0",
+      id,
+      error: { code: -32601, message: `Method not found: ${method}` },
+    };
+  }
+
   const httpServer = http.createServer(async (req, res) => {
-    // Enable CORS for web-based agents (Grok Bot, Claude web, etc.)
+    // Enable CORS for web-based agents (Grok Bot, ChatGPT, Claude web, Dots, etc.)
     res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-API-Key");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
+    res.setHeader(
+      "Access-Control-Allow-Headers",
+      "Content-Type, Accept, Authorization, X-API-Key, Mcp-Session-Id, Last-Event-ID"
+    );
+    res.setHeader("Access-Control-Expose-Headers", "Mcp-Session-Id");
 
     if (req.method === "OPTIONS") {
       res.writeHead(204);
@@ -740,17 +817,152 @@ export async function startSseServer(port = 3005, host = "0.0.0.0", defaultApiKe
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(
         JSON.stringify({
+          ok: true,
           status: "ok",
           server: "reeling-mcp",
           version: "1.0.0",
-          transport: "sse",
+          transports: ["streamable-http", "sse"],
+          endpoints: {
+            mcp: "https://mcp.reeling.app/mcp",
+            sse: "https://mcp.reeling.app/sse",
+            install: "https://mcp.reeling.app/install",
+          },
+          tools: TOOLS_DEFINITIONS.map((t) => t.name),
           activeSessions: sessions.size,
         })
       );
       return;
     }
 
-    // SSE connection stream endpoint
+    if ((pathname === "/" || pathname === "/install") && req.method === "GET") {
+      res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+      res.end(`<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Connect Reeling MCP — Grok Bot, ChatGPT, Dots, Claude & Cursor</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 760px; margin: 40px auto; padding: 0 20px; color: #111827; line-height: 1.6; }
+    code, pre { background: #f3f4f6; padding: 2px 6px; border-radius: 6px; font-size: 0.92em; }
+    pre { padding: 14px; overflow-x: auto; }
+    .card { border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; margin: 18px 0; }
+    h1, h2 { color: #0f172a; }
+  </style>
+</head>
+<body>
+  <h1>Connect Reeling to Grok Bot, ChatGPT, Dots, Claude &amp; Cursor</h1>
+  <p>Hosted Streamable HTTP MCP Endpoint: <code>https://mcp.reeling.app/mcp</code></p>
+  <div class="card">
+    <h2>1. Connect in ChatGPT / OpenAI Dots / Grok Bot</h2>
+    <ol>
+      <li>Open <strong>Connect Apps / Plugins / Connectors</strong>.</li>
+      <li>Click <strong>Add custom MCP</strong> (or <strong>New Connector &rarr; Custom</strong>).</li>
+      <li>Name: <code>Reeling</code></li>
+      <li>MCP Server URL: <code>https://mcp.reeling.app/mcp</code></li>
+      <li>Authentication: Choose <strong>No authentication</strong> (you can supply your <code>rl_...</code> API key directly in chat or via workspace settings).</li>
+    </ol>
+  </div>
+  <div class="card">
+    <h2>2. Connect in Claude Web / Desktop</h2>
+    <p>Add Custom Connector URL: <code>https://mcp.reeling.app/mcp</code> or run locally via <code>npx -y reeling-mcp</code>.</p>
+  </div>
+  <p><a href="https://reeling.app/developers">Reeling Developer Portal</a> &middot; <a href="https://reeling.app/pricing">Pricing</a> &middot; <a href="https://reeling.app/privacy">Privacy Policy</a></p>
+</body>
+</html>`);
+      return;
+    }
+
+    // Streamable HTTP MCP endpoint (/mcp)
+    if (pathname === "/mcp") {
+      const apiKey =
+        req.headers["x-api-key"] ||
+        (req.headers.authorization?.startsWith("Bearer ")
+          ? req.headers.authorization.slice(7)
+          : null) ||
+        reqUrl.searchParams.get("api_key") ||
+        defaultApiKey;
+
+      if (req.method === "DELETE") {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true }));
+        return;
+      }
+
+      if (req.method === "GET") {
+        // Streamable HTTP GET opens an SSE notification stream
+        res.writeHead(200, {
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache, no-transform",
+          Connection: "keep-alive",
+        });
+        res.write(": connected\n\n");
+        const keepAlive = setInterval(() => {
+          res.write(": ping\n\n");
+        }, 25000);
+        req.on("close", () => clearInterval(keepAlive));
+        return;
+      }
+
+      if (req.method === "POST") {
+        let rawBody = "";
+        for await (const chunk of req) {
+          rawBody += chunk;
+          if (rawBody.length > 1024 * 1024) {
+            res.writeHead(413, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ error: "Payload too large" }));
+            return;
+          }
+        }
+
+        let parsed;
+        try {
+          parsed = JSON.parse(rawBody);
+        } catch {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(
+            JSON.stringify({
+              jsonrpc: "2.0",
+              id: null,
+              error: { code: -32700, message: "Parse error" },
+            })
+          );
+          return;
+        }
+
+        const sessionId =
+          req.headers["mcp-session-id"] || crypto.randomUUID();
+        res.setHeader("Mcp-Session-Id", sessionId);
+
+        if (Array.isArray(parsed)) {
+          const responses = (
+            await Promise.all(parsed.map((item) => handleJsonRpcMessage(item, apiKey)))
+          ).filter((r) => r !== null);
+
+          if (responses.length === 0) {
+            res.writeHead(202);
+            res.end();
+            return;
+          }
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify(responses));
+          return;
+        }
+
+        const responseObj = await handleJsonRpcMessage(parsed, apiKey);
+        if (responseObj === null) {
+          res.writeHead(202);
+          res.end();
+          return;
+        }
+
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify(responseObj));
+        return;
+      }
+    }
+
+    // Legacy SSE connection stream endpoint (/sse)
     if (pathname === "/sse" && req.method === "GET") {
       const apiKey =
         req.headers["x-api-key"] ||
@@ -797,12 +1009,12 @@ export async function startSseServer(port = 3005, host = "0.0.0.0", defaultApiKe
     }
 
     res.writeHead(404, { "Content-Type": "text/plain" });
-    res.end("Not Found. Reeling MCP server endpoints: GET /health, GET /sse, POST /messages");
+    res.end("Not Found. Reeling MCP server endpoints: POST/GET /mcp, GET /health, GET /install, GET /sse, POST /messages");
   });
 
   return new Promise((resolve, reject) => {
     httpServer.listen(port, host, () => {
-      console.log(`Reeling MCP Server running over SSE on http://${host}:${port}/sse`);
+      console.log(`Reeling MCP Server running on http://${host}:${port}/mcp (Streamable HTTP) and /sse`);
       resolve(httpServer);
     });
     httpServer.on("error", reject);
