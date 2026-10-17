@@ -813,6 +813,68 @@ export async function startSseServer(port = 3005, host = "0.0.0.0", defaultApiKe
     const reqUrl = new URL(req.url, `http://${req.headers.host || "localhost"}`);
     const pathname = reqUrl.pathname;
 
+    if (pathname === "/.well-known/openai-apps-challenge" && req.method === "GET") {
+      const challengeToken = (process.env.OPENAI_APPS_CHALLENGE_TOKEN || "").trim();
+      if (!challengeToken) {
+        res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" });
+        res.end("OPENAI_APPS_CHALLENGE_TOKEN not configured");
+        return;
+      }
+      res.writeHead(200, { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" });
+      res.end(challengeToken);
+      return;
+    }
+
+    if (
+      (req.method === "GET" || req.method === "HEAD") &&
+      (pathname === "/downloads/reeling-openai.zip" ||
+        pathname === "/downloads/reeling-claude.zip" ||
+        pathname === "/downloads/grok-connector.json" ||
+        pathname === "/downloads/checksums.json" ||
+        pathname === "/assets/reeling.png")
+    ) {
+      const fs = await import("node:fs/promises");
+      const path = await import("node:path");
+      const { fileURLToPath } = await import("node:url");
+      const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+      const fileMap = {
+        "/downloads/reeling-openai.zip": {
+          file: path.join(rootDir, "dist", "public-downloads", "reeling-openai.zip"),
+          type: "application/zip",
+        },
+        "/downloads/reeling-claude.zip": {
+          file: path.join(rootDir, "dist", "public-downloads", "reeling-claude.zip"),
+          type: "application/zip",
+        },
+        "/downloads/grok-connector.json": {
+          file: path.join(rootDir, "dist", "public-downloads", "grok-connector.json"),
+          type: "application/json; charset=utf-8",
+        },
+        "/downloads/checksums.json": {
+          file: path.join(rootDir, "dist", "public-downloads", "checksums.json"),
+          type: "application/json; charset=utf-8",
+        },
+        "/assets/reeling.png": {
+          file: path.join(rootDir, "public", "assets", "reeling.png"),
+          type: "image/png",
+        },
+      };
+      const entry = fileMap[pathname];
+      try {
+        const data = await fs.readFile(entry.file);
+        res.writeHead(200, {
+          "Content-Type": entry.type,
+          "Content-Length": data.length,
+          "Cache-Control": "public, max-age=300",
+        });
+        res.end(data);
+      } catch {
+        res.writeHead(404, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Package file not found" }));
+      }
+      return;
+    }
+
     if (pathname === "/health") {
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(
@@ -826,6 +888,10 @@ export async function startSseServer(port = 3005, host = "0.0.0.0", defaultApiKe
             mcp: "https://mcp.reeling.app/mcp",
             sse: "https://mcp.reeling.app/sse",
             install: "https://mcp.reeling.app/install",
+            openaiPluginZip: "https://mcp.reeling.app/downloads/reeling-openai.zip",
+            claudePluginZip: "https://mcp.reeling.app/downloads/reeling-claude.zip",
+            grokManifest: "https://mcp.reeling.app/downloads/grok-connector.json",
+            checksums: "https://mcp.reeling.app/downloads/checksums.json",
           },
           tools: TOOLS_DEFINITIONS.map((t) => t.name),
           activeSessions: sessions.size,
@@ -848,13 +914,14 @@ export async function startSseServer(port = 3005, host = "0.0.0.0", defaultApiKe
     pre { padding: 14px; overflow-x: auto; }
     .card { border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; margin: 18px 0; }
     h1, h2 { color: #0f172a; }
+    .btn { display: inline-block; background: #7c3aed; color: #fff; text-decoration: none; padding: 8px 14px; border-radius: 8px; margin-right: 8px; font-weight: 600; font-size: 0.92em; }
   </style>
 </head>
 <body>
   <h1>Connect Reeling to Grok Bot, ChatGPT, Dots, Claude &amp; Cursor</h1>
   <p>Hosted Streamable HTTP MCP Endpoint: <code>https://mcp.reeling.app/mcp</code></p>
   <div class="card">
-    <h2>1. Connect in ChatGPT / OpenAI Dots / Grok Bot</h2>
+    <h2>1. Direct Custom MCP Connection (Instant)</h2>
     <ol>
       <li>Open <strong>Connect Apps / Plugins / Connectors</strong>.</li>
       <li>Click <strong>Add custom MCP</strong> (or <strong>New Connector &rarr; Custom</strong>).</li>
@@ -864,10 +931,19 @@ export async function startSseServer(port = 3005, host = "0.0.0.0", defaultApiKe
     </ol>
   </div>
   <div class="card">
-    <h2>2. Connect in Claude Web / Desktop</h2>
-    <p>Add Custom Connector URL: <code>https://mcp.reeling.app/mcp</code> or run locally via <code>npx -y reeling-mcp</code>.</p>
+    <h2>2. Agent Plugins 1.0 Directory Packages</h2>
+    <p>Download pre-built plugin bundles for directory upload or local installation:</p>
+    <p>
+      <a class="btn" href="/downloads/reeling-openai.zip">reeling-openai.zip</a>
+      <a class="btn" href="/downloads/reeling-claude.zip">reeling-claude.zip</a>
+      <a class="btn" href="/downloads/grok-connector.json">grok-connector.json</a>
+    </p>
   </div>
-  <p><a href="https://reeling.app/developers">Reeling Developer Portal</a> &middot; <a href="https://reeling.app/pricing">Pricing</a> &middot; <a href="https://reeling.app/privacy">Privacy Policy</a></p>
+  <div class="card">
+    <h2>3. Connect in Claude Desktop / Cursor / Windsurf (CLI)</h2>
+    <p>Run locally via <code>npx -y reeling-mcp</code> or point HTTP connector to <code>https://mcp.reeling.app/mcp</code>.</p>
+  </div>
+  <p id="support"><a href="https://reeling.app/developers">Reeling Developer Portal</a> &middot; <a href="https://reeling.app/pricing">Pricing</a> &middot; <a href="https://reeling.app/privacy">Privacy Policy</a> &middot; <a href="https://reeling.app/terms">Terms</a></p>
 </body>
 </html>`);
       return;
