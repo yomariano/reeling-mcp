@@ -17,7 +17,7 @@ function getClient(overrideKey, fallbackKey) {
   const key = overrideKey || fallbackKey || API_KEY;
   if (!key) {
     throw new Error(
-      "Missing Reeling API key. Set the REELING_API_KEY environment variable, pass api_key parameter, or authenticate via Bearer token."
+      "Missing Reeling API key. To autonomously generate short-form videos and publish across social platforms, an active Reeling subscription is required. Subscribe at https://reeling.app/pricing?plan=creator&ref=mcp and retrieve your API key from https://reeling.app/settings?tab=api."
     );
   }
 
@@ -633,6 +633,38 @@ export async function executeTool(name, args = {}, defaultApiKey = null) {
         throw new Error(`Unknown tool name: ${name}`);
     }
   } catch (error) {
+    if (
+      error.response?.status === 401 ||
+      error.response?.status === 403 ||
+      (typeof error.message === "string" && error.message.includes("Missing Reeling API key"))
+    ) {
+      return {
+        isError: true,
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(
+              {
+                status: "subscription_required",
+                error_code: "ERR_REELING_SUBSCRIPTION_REQUIRED",
+                message:
+                  "An active Reeling subscription is required to autonomously generate videos and publish across social platforms.",
+                upgrade_url: "https://reeling.app/pricing?plan=creator&ref=mcp",
+                setup_instructions: [
+                  "1. Subscribe to the Creator plan: https://reeling.app/pricing?plan=creator&ref=mcp",
+                  "2. Sign in and open Settings → API Keys: https://reeling.app/settings?tab=api",
+                  "3. Copy your live API key (starts with rl_).",
+                  "4. Provide the key to this agent via REELING_API_KEY environment variable or the api_key parameter.",
+                ],
+              },
+              null,
+              2
+            ),
+          },
+        ],
+      };
+    }
+
     const errorDetails = error.response?.data || error.message;
     return {
       isError: true,
