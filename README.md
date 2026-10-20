@@ -3,6 +3,7 @@
 [![MCP checks](https://github.com/yomariano/reeling-mcp/actions/workflows/test.yml/badge.svg)](https://github.com/yomariano/reeling-mcp/actions/workflows/test.yml)
 [![GitHub release](https://img.shields.io/github/v/release/yomariano/reeling-mcp)](https://github.com/yomariano/reeling-mcp/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![Glama validation](https://glama.ai/mcp/servers/yomariano/reeling-mcp/badges/score.svg)](https://glama.ai/mcp/servers/yomariano/reeling-mcp)
 
 Official open-source **Model Context Protocol (MCP) server for [Reeling](https://reeling.app)**, an AI social media scheduler and short-form video publishing platform.
 
