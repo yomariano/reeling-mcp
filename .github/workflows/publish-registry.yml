@@ -1,0 +1,26 @@
+name: Publish official MCP registry
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download the pinned official publisher
+        run: |
+          curl --fail --location --output "$RUNNER_TEMP/publisher.tar.gz" https://github.com/modelcontextprotocol/registry/releases/download/v1.8.1/mcp-publisher_linux_amd64.tar.gz
+          curl --fail --location --output "$RUNNER_TEMP/checksums.txt" https://github.com/modelcontextprotocol/registry/releases/download/v1.8.1/registry_1.8.1_checksums.txt
+          cd "$RUNNER_TEMP"
+          expected=$(awk '$2 == "mcp-publisher_linux_amd64.tar.gz" {print $1}' checksums.txt)
+          test -n "$expected"
+          echo "$expected  publisher.tar.gz" | sha256sum --check
+          tar xzf publisher.tar.gz mcp-publisher
+      - name: Authenticate with this GitHub repository identity
+        run: '"$RUNNER_TEMP/mcp-publisher" login github-oidc'
+      - name: Validate and publish the reviewed descriptor
+        run: |
+          "$RUNNER_TEMP/mcp-publisher" validate --file server.json
+          "$RUNNER_TEMP/mcp-publisher" publish server.json

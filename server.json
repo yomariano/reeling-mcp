@@ -1,0 +1,14 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.yomariano/reeling",
+  "title": "Reeling",
+  "description": "Social publishing, scheduling and delivery-status tools for Reeling accounts.",
+  "version": "1.0.1",
+  "websiteUrl": "https://reeling.app/developers/mcp",
+  "repository": { "url": "https://github.com/yomariano/reeling-mcp", "source": "github" },
+  "remotes": [{
+    "type": "streamable-http",
+    "url": "https://mcp.reeling.app/mcp",
+    "headers": [{ "name": "X-API-Key", "description": "Reeling API key from your account settings", "isRequired": true, "isSecret": true }]
+  }]
+}

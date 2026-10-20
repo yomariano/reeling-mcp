@@ -1,16 +1,22 @@
-# reeling-mcp 🎬🤖
+# Reeling MCP server
+
+[![MCP checks](https://github.com/yomariano/reeling-mcp/actions/workflows/test.yml/badge.svg)](https://github.com/yomariano/reeling-mcp/actions/workflows/test.yml)
+[![GitHub release](https://img.shields.io/github/v/release/yomariano/reeling-mcp)](https://github.com/yomariano/reeling-mcp/releases)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 Official open-source **Model Context Protocol (MCP) server for [Reeling](https://reeling.app)**, an AI social media scheduler and short-form video publishing platform.
 
 Use Reeling from Claude Desktop, Cursor, Windsurf, OpenClaw, ChatGPT-compatible connectors, or your own MCP client. The server gives an AI agent a controlled interface for cross-platform social publishing, scheduling, analytics, audience comments, and content adaptation.
 
-This repository is the public developer companion for Reeling. It contains the MCP adapter and integration examples; Reeling's private application, production infrastructure, customer data, and credentials are not part of this repository.
+This repository is the public developer companion for Reeling. It contains the MCP adapter; runnable API examples live in [reeling-examples](https://github.com/yomariano/reeling-examples); Reeling's private application, production infrastructure, customer data, and credentials are not part of this repository.
 
 **Links:** [Reeling homepage](https://reeling.app) · [Developer portal](https://reeling.app/developers) · [Hosted MCP install](https://mcp.reeling.app/install) · [API settings](https://reeling.app/settings?tab=api) · [Pricing](https://reeling.app/pricing) · [X: @yomariano05](https://x.com/yomariano05)
 
 ---
 
-## ⚡ Supported Platforms
+## Platform integrations
+
+Availability depends on the connected account, app access and current capabilities. TikTok inbox delivery requires finishing in TikTok; check the [current platform matrix](https://reeling.app/developers) before publishing.
 
 - 🎵 **TikTok**
 - 📸 **Instagram Reels & Stories**
@@ -38,9 +44,9 @@ This repository is the public developer companion for Reeling. It contains the M
 | `reeling_get_inbox` | Retrieves audience comments across social channels into a unified inbox. |
 | `reeling_reply_to_comment` | Posts a direct reply to a comment on any connected social platform. |
 | `reeling_adapt_content_ai` | Uses Reeling's AI copy engine to adapt a hook/script for TikTok, Instagram, YouTube, Threads, or Bluesky. |
-| `reeling_generate_video` | Generates short-form video clips in seconds with fal.ai MiniMax H3 Max AI models and saves them directly to Reeling storage. |
+| `reeling_generate_video` | Requests short-form video generation through Reeling’s configured service; plan allowance and provider processing apply. |
 | `reeling_create_storyboard` | Generates structured multi-scene storyboards (30s up to 5 minutes) broken into consecutive 5s cinematic cuts with audio/foley cues. |
-| `reeling_stitch_storyboard` | Renders storyboard scenes via MiniMax H3 and stitches them into a continuous MP4 video with FFmpeg, uploading to R2 storage. |
+| `reeling_stitch_storyboard` | Requests scene rendering and stitching through Reeling’s configured video workflow. |
 
 ---
 
@@ -54,7 +60,7 @@ This repository is the public developer companion for Reeling. It contains the M
 2. **Run the server**:
 
    ```bash
-   npx -y reeling-mcp
+   npx -y github:yomariano/reeling-mcp#v1.0.1
    ```
 
    Or connect to the hosted Streamable HTTP endpoint at `https://mcp.reeling.app/mcp` using the [installation guide](https://mcp.reeling.app/install).
@@ -73,7 +79,7 @@ Add this to your `claude_desktop_config.json`:
   "mcpServers": {
     "reeling": {
       "command": "npx",
-      "args": ["-y", "reeling-mcp"],
+      "args": ["-y", "github:yomariano/reeling-mcp#v1.0.1"],
       "env": {
         "REELING_API_KEY": "rl_your_live_api_key_here",
         "REELING_API_URL": "https://api.reeling.app"
@@ -105,7 +111,8 @@ Create or edit `.cursor/mcp.json` in your project root:
 {
   "mcpServers": {
     "reeling": {
-      "command": "npx -y reeling-mcp",
+      "command": "npx",
+      "args": ["-y", "github:yomariano/reeling-mcp#v1.0.1"],
       "env": {
         "REELING_API_KEY": "rl_your_live_api_key_here"
       }
@@ -122,7 +129,7 @@ Add to your `~/.gemini/antigravity-cli/mcp_config.json` or project MCP configura
   "mcpServers": {
     "reeling": {
       "command": "node",
-      "args": ["/Users/mariano/Developer/reeling/reeling-mcp/bin/cli.js"],
+      "args": ["/absolute/path/to/reeling-mcp/bin/cli.js"],
       "env": {
         "REELING_API_KEY": "rl_your_live_api_key_here"
       }
@@ -136,12 +143,12 @@ You can run `reeling-mcp` as a persistent Server-Sent Events (SSE) server for re
 
 ```bash
 # Run locally or deploy to Railway / Render / VPS / Docker
-npx reeling-mcp --sse --port 3005
+npx -y github:yomariano/reeling-mcp#v1.0.1 --sse --port 3005
 ```
 
 Endpoints exposed:
 * `GET /health`: Health check status.
-* `GET /sse`: Server-Sent Events connection stream (`?api_key=rl_...` or `X-API-Key` header).
+* `GET /sse`: Server-Sent Events connection stream (provide a credential through your client’s secret header configuration).
 * `POST /messages?sessionId=...`: JSON-RPC protocol message receiver.
 
 #### Grok Bot Configuration (xAI)
@@ -182,3 +189,31 @@ MIT © [reeling.app](https://reeling.app)
 ## Contributing
 
 Issues and pull requests are welcome for client compatibility, documentation, examples, and safe improvements to the MCP transport. Do not commit API keys, production URLs containing secrets, customer data, or private Reeling application code. See the repository's [security policy](SECURITY.md) before reporting a vulnerability.
+
+## Working examples
+
+Clone [reeling-examples](https://github.com/yomariano/reeling-examples) for account discovery, a reviewed video request, bounded delivery-status polling, analytics retrieval and an editable content calendar. Start in offline mode. [Read the example guide](https://reeling.app/developers/examples).
+
+## Architecture
+
+```mermaid
+flowchart LR
+  Client[Your MCP client] -->|stdio or HTTPS /mcp| Adapter[Reeling MCP adapter]
+  Adapter -->|API key| API[Reeling REST API]
+  API --> Queue[Publishing queue]
+  Queue --> Channels[Authorized social channels]
+  API -->|Per-destination state| Adapter
+```
+
+The adapter sends authenticated requests to the Reeling API. Account, plan and platform permissions determine what can run. Review write tools in your client; a tool result or upload receipt alone does not establish public publication.
+
+## Development and releases
+
+```sh
+npm ci
+npm test
+npm run check
+npm pack --dry-run
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md), [CHANGELOG.md](CHANGELOG.md), and [GitHub releases](https://github.com/yomariano/reeling-mcp/releases). Installs above use a versioned GitHub tag; npm publication requires a separate authenticated npm release.

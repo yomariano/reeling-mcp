@@ -1,6 +1,6 @@
 {
   "name": "reeling-mcp",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Official Model Context Protocol (MCP) Server for reeling.app",
   "homepage": "https://mcp.reeling.app/install",
   "repository": {
@@ -17,7 +17,8 @@
   "type": "module",
   "scripts": {
     "start": "node bin/cli.js",
-    "test": "node src/index.js"
+    "test": "node --test test/*.test.mjs",
+    "check": "node --check src/index.js && node --check bin/cli.js"
   },
   "keywords": [
     "mcp",
@@ -43,5 +44,21 @@
     "@modelcontextprotocol/sdk": "^1.6.0",
     "axios": "^1.7.9",
     "dotenv": "^16.4.7"
-  }
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "mcpName": "io.github.yomariano/reeling",
+  "files": [
+    "bin/",
+    "src/",
+    "public/",
+    "scripts/build-plugins.js",
+    "dist/public-downloads/",
+    "README.md",
+    "LICENSE",
+    "SECURITY.md",
+    "CHANGELOG.md",
+    "server.json"
+  ]
 }
