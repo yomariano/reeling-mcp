@@ -831,13 +831,18 @@ export async function startSseServer(port = 3005, host = "0.0.0.0", defaultApiKe
         pathname === "/downloads/reeling-claude.zip" ||
         pathname === "/downloads/grok-connector.json" ||
         pathname === "/downloads/checksums.json" ||
-        pathname === "/assets/reeling.png")
+        pathname === "/assets/reeling.png" ||
+        pathname === "/.well-known/glama.json")
     ) {
       const fs = await import("node:fs/promises");
       const path = await import("node:path");
       const { fileURLToPath } = await import("node:url");
       const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
       const fileMap = {
+        "/.well-known/glama.json": {
+          file: path.join(rootDir, "public", ".well-known", "glama.json"),
+          type: "application/json; charset=utf-8",
+        },
         "/downloads/reeling-openai.zip": {
           file: path.join(rootDir, "dist", "public-downloads", "reeling-openai.zip"),
           type: "application/zip",
