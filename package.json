@@ -2,6 +2,14 @@
   "name": "reeling-mcp",
   "version": "1.0.0",
   "description": "Official Model Context Protocol (MCP) Server for reeling.app",
+  "homepage": "https://mcp.reeling.app/install",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yomariano/reeling-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yomariano/reeling-mcp/issues"
+  },
   "main": "src/index.js",
   "bin": {
     "reeling-mcp": "bin/cli.js"
@@ -19,6 +27,10 @@
     "claude",
     "cursor",
     "ai-agent",
+    "mcp-server",
+    "social-media-automation",
+    "social-media-publishing-api",
+    "short-form-video",
     "tiktok",
     "instagram",
     "youtube",

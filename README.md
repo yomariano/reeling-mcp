@@ -1,8 +1,12 @@
 # reeling-mcp 🎬🤖
 
-Official **Model Context Protocol (MCP)** server for [reeling.app](https://reeling.app) — the open-source social media management & short-form video publishing platform.
+Official open-source **Model Context Protocol (MCP) server for [Reeling](https://reeling.app)**, an AI social media scheduler and short-form video publishing platform.
 
-With `reeling-mcp`, your AI coding assistants and agents (Claude Desktop, Cursor, Antigravity, Windsurf, OpenClaw, etc.) can directly publish short-form videos, schedule posts across multiple platforms, inspect live analytics, monitor incoming audience comments, reply to comments, and adapt content automatically.
+Use Reeling from Claude Desktop, Cursor, Windsurf, OpenClaw, ChatGPT-compatible connectors, or your own MCP client. The server gives an AI agent a controlled interface for cross-platform social publishing, scheduling, analytics, audience comments, and content adaptation.
+
+This repository is the public developer companion for Reeling. It contains the MCP adapter and integration examples; Reeling's private application, production infrastructure, customer data, and credentials are not part of this repository.
+
+**Links:** [Reeling homepage](https://reeling.app) · [Developer portal](https://reeling.app/developers) · [Hosted MCP install](https://mcp.reeling.app/install) · [API settings](https://reeling.app/settings?tab=api) · [Pricing](https://reeling.app/pricing)
 
 ---
 
@@ -46,6 +50,14 @@ With `reeling-mcp`, your AI coding assistants and agents (Claude Desktop, Cursor
    - Go to [reeling.app](https://reeling.app) and sign in.
    - Navigate to **Settings** → **API Keys**.
    - Generate a new key (starts with `rl_...`).
+
+2. **Run the server**:
+
+   ```bash
+   npx -y reeling-mcp
+   ```
+
+   Or connect to the hosted Streamable HTTP endpoint at `https://mcp.reeling.app/mcp` using the [installation guide](https://mcp.reeling.app/install).
 
 ---
 
@@ -140,13 +152,11 @@ Add to your Grok Bot custom MCP servers:
 
 ---
 
-## 🤖 ChatGPT, Dots & ElizaOS Integrations
+## 🤖 Agent integrations
 
-See the `/integrations` directory for ready-to-use packages:
-* **ChatGPT Custom GPT**: `integrations/chatgpt/` (OpenAPI schema & instructions)
-* **xAI Grok Bot Plugin**: `integrations/grokbot/` (Plugin manifest)
-* **ElizaOS Autonomous Agent Plugin**: `integrations/elizaos/` (`@elizaos/plugin-reeling`)
-* **Discord Community Bot**: `integrations/discord/` (Slash commands `/reel`)
+The hosted server exposes installable bundles and connector metadata for ChatGPT-compatible connectors, Claude, and Grok at [mcp.reeling.app/install](https://mcp.reeling.app/install). The local package works with any MCP client that can launch an npm package or connect to the HTTP transport.
+
+For API-level integrations, see the [Reeling developer portal](https://reeling.app/developers). Please open an issue when you build a client, example, or platform adapter that other Reeling users could reuse.
 
 ---
 
@@ -168,3 +178,7 @@ curl http://localhost:3005/health
 
 ## 📄 License
 MIT © [reeling.app](https://reeling.app)
+
+## Contributing
+
+Issues and pull requests are welcome for client compatibility, documentation, examples, and safe improvements to the MCP transport. Do not commit API keys, production URLs containing secrets, customer data, or private Reeling application code. See the repository's [security policy](SECURITY.md) before reporting a vulnerability.
