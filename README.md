@@ -6,7 +6,7 @@ Use Reeling from Claude Desktop, Cursor, Windsurf, OpenClaw, ChatGPT-compatible 
 
 This repository is the public developer companion for Reeling. It contains the MCP adapter and integration examples; Reeling's private application, production infrastructure, customer data, and credentials are not part of this repository.
 
-**Links:** [Reeling homepage](https://reeling.app) · [Developer portal](https://reeling.app/developers) · [Hosted MCP install](https://mcp.reeling.app/install) · [API settings](https://reeling.app/settings?tab=api) · [Pricing](https://reeling.app/pricing)
+**Links:** [Reeling homepage](https://reeling.app) · [Developer portal](https://reeling.app/developers) · [Hosted MCP install](https://mcp.reeling.app/install) · [API settings](https://reeling.app/settings?tab=api) · [Pricing](https://reeling.app/pricing) · [X: @yomariano05](https://x.com/yomariano05)
 
 ---
 
