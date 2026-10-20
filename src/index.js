@@ -941,7 +941,7 @@ export async function startSseServer(port = 3005, host = "0.0.0.0", defaultApiKe
   </div>
   <div class="card">
     <h2>3. Connect in Claude Desktop / Cursor / Windsurf (CLI)</h2>
-    <p>Run locally via <code>npx -y reeling-mcp</code> or point HTTP connector to <code>https://mcp.reeling.app/mcp</code>.</p>
+    <p>Run locally via <code>npx -y github:yomariano/reeling-mcp#v1.0.1</code> or point HTTP connector to <code>https://mcp.reeling.app/mcp</code>.</p>
   </div>
   <p id="support"><a href="https://reeling.app/developers">Reeling Developer Portal</a> &middot; <a href="https://reeling.app/pricing">Pricing</a> &middot; <a href="https://reeling.app/privacy">Privacy Policy</a> &middot; <a href="https://reeling.app/terms">Terms</a></p>
 </body>

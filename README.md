@@ -217,3 +217,9 @@ npm pack --dry-run
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md), [CHANGELOG.md](CHANGELOG.md), and [GitHub releases](https://github.com/yomariano/reeling-mcp/releases). Installs above use a versioned GitHub tag; npm publication requires a separate authenticated npm release.
+
+## Setup guide preview
+
+![Reeling MCP setup guide with transport choices and configuration instructions](docs/mcp-setup.png)
+
+Local preview of the public developer guide. [Open the current setup guide](https://reeling.app/developers/mcp).
