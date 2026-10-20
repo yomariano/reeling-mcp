@@ -754,7 +754,7 @@ export async function startSseServer(port = 3005, host = "0.0.0.0", defaultApiKe
           },
           serverInfo: {
             name: "reeling-mcp",
-            version: "1.0.0",
+            version: "1.0.1",
           },
           instructions:
             "Reeling MCP Server connects AI agents (Grok Bot, ChatGPT, OpenAI Dots, Claude, Cursor) to reeling.app for multi-platform short-form video publishing (TikTok, Instagram Reels, YouTube Shorts, Threads, Bluesky, X, LinkedIn, Pinterest). If a user has not supplied an API key yet, guide them to https://reeling.app/pricing?plan=creator&ref=mcp and https://reeling.app/settings?tab=api.",
@@ -882,7 +882,7 @@ export async function startSseServer(port = 3005, host = "0.0.0.0", defaultApiKe
           ok: true,
           status: "ok",
           server: "reeling-mcp",
-          version: "1.0.0",
+          version: "1.0.1",
           transports: ["streamable-http", "sse"],
           endpoints: {
             mcp: "https://mcp.reeling.app/mcp",

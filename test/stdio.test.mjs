@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { startSseServer } from '../src/index.js';
 
 test('a real stdio client lists tools and reads projects against a local API fixture', async () => {
   const requests = [];
@@ -30,4 +31,18 @@ test('a real stdio client lists tools and reads projects against a local API fix
     assert.equal(JSON.parse(result.content[0].text).projects[0].name, 'Offline fixture');
     assert.deepEqual(requests, [{ path: '/api/v1/projects', method: 'GET', authorized: true }]);
   } finally { await client.close(); await new Promise(resolve => api.close(resolve)); }
+});
+
+test('HTTP discovery and health report the release version without executing a tool', async () => {
+  const server = await startSseServer(0, '127.0.0.1');
+  const base = `http://127.0.0.1:${server.address().port}`;
+  try {
+    const health = await (await fetch(base + '/health')).json();
+    assert.equal(health.version, '1.0.1');
+    const response = await fetch(base + '/mcp', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/event-stream' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'offline-test', version: '1.0.0' } } }) });
+    const data = await response.json();
+    assert.equal(data.result.serverInfo.version, health.version);
+    const install = await (await fetch(base + '/install')).text();
+    assert.match(install, /github:yomariano\/reeling-mcp#v1\.0\.1/);
+  } finally { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }
 });
