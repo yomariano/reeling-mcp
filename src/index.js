@@ -68,25 +68,25 @@ export const TOOLS_DEFINITIONS = [
       {
         name: "reeling_publish_post",
         description:
-          "Publish or schedule short-form videos and posts across multiple social platforms simultaneously (TikTok, Instagram Reels, YouTube Shorts, Threads, Bluesky, Facebook, Twitter/X, LinkedIn, Pinterest).",
+          "Publish or schedule short-form videos, articles, and posts across multiple social platforms simultaneously (TikTok, Instagram Reels, YouTube Shorts, Threads, Bluesky, Facebook, Twitter/X, LinkedIn, Pinterest, Medium, Quora, Reddit).",
         inputSchema: {
           type: "object",
           required: ["content", "platforms"],
           properties: {
             content: {
               type: "string",
-              description: "Post copy, caption, or description.",
+              description: "Post copy, article body, caption, or description.",
             },
             platforms: {
               type: "array",
               items: { type: "string" },
               description:
-                "List of platform keys to publish to, e.g. ['tiktok', 'instagram', 'youtube', 'bluesky', 'threads'].",
+                "List of platform keys to publish to, e.g. ['tiktok', 'instagram', 'youtube', 'bluesky', 'threads', 'medium', 'quora', 'reddit'].",
             },
             video_url: {
               type: "string",
               description:
-                "Publicly accessible URL of the video file to publish (MP4, MOV, WebM).",
+                "Publicly accessible URL of the video file to publish (MP4, MOV, WebM). Optional when publishing text/article posts to Medium, Quora, or Reddit.",
             },
             thumbnail_url: {
               type: "string",
@@ -106,7 +106,18 @@ export const TOOLS_DEFINITIONS = [
             title: {
               type: "string",
               description:
-                "Title for video platforms like YouTube Shorts or Pinterest pin titles.",
+                "Title or headline for YouTube Shorts, Pinterest pins, Medium stories, Quora shares, or Reddit posts.",
+            },
+            subreddit: {
+              type: "string",
+              description:
+                "Optional subreddit name for Reddit posts (e.g. 'saas' or 'entrepreneur'). Leave empty to post directly to the connected user profile.",
+            },
+            tags: {
+              type: "array",
+              items: { type: "string" },
+              description:
+                "Optional array of up to 5 topic tags for Medium stories (e.g. ['ai', 'marketing', 'saas']).",
             },
             scheduled_at: {
               type: "string",
@@ -447,6 +458,11 @@ export async function executeTool(name, args = {}, defaultApiKey = null) {
           video_url: args.video_url,
           thumbnail_url: args.thumbnail_url,
           title: args.title,
+          subreddit: args.subreddit,
+          tags: args.tags,
+          medium: args.medium,
+          quora: args.quora,
+          reddit: args.reddit,
           pinterest_board_id: args.pinterest_board_id,
           pinterest_link: args.pinterest_link,
           pinterest: args.pinterest,
