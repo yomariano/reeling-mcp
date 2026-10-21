@@ -1,0 +1,29 @@
+{
+  "documentType": "reeling-connector-submission-manifest",
+  "platform": "grok",
+  "displayName": "Reeling",
+  "description": "Create faceless short-form videos, adapt captions, schedule and publish across 10+ social platforms (TikTok, Instagram Reels, YouTube Shorts, Threads, Bluesky, X, LinkedIn, Pinterest), and analyze cross-platform metrics.",
+  "mcpUrl": "https://mcp.reeling.app/mcp",
+  "transport": "streamable-http",
+  "authentication": "api_key_or_bearer",
+  "tools": [
+    "reeling_list_projects",
+    "reeling_list_channels",
+    "reeling_publish_post",
+    "reeling_get_channel_options",
+    "reeling_get_post_status",
+    "reeling_get_analytics",
+    "reeling_sync_metrics",
+    "reeling_evaluate_content_jev",
+    "reeling_get_inbox",
+    "reeling_reply_to_comment",
+    "reeling_adapt_content_ai",
+    "reeling_generate_video",
+    "reeling_create_storyboard",
+    "reeling_stitch_storyboard"
+  ],
+  "website": "https://reeling.app",
+  "installGuide": "https://mcp.reeling.app/install",
+  "privacyPolicyUrl": "https://reeling.app/privacy",
+  "termsOfServiceUrl": "https://reeling.app/terms"
+}

@@ -119,6 +119,22 @@ export const TOOLS_DEFINITIONS = [
               description:
                 "Optional array of up to 5 topic tags for Medium stories (e.g. ['ai', 'marketing', 'saas']).",
             },
+            mode: {
+              type: "string",
+              enum: ["post", "reply"],
+              description:
+                "Set to 'reply' when answering an existing Reddit thread or Quora question via target_url (enforces max 3 answers/day). Defaults to 'post' (max 3 top-level posts/week on Reddit & Quora).",
+            },
+            target_url: {
+              type: "string",
+              description:
+                "Optional Reddit thread URL or Quora question URL to reply to directly via Reeling Companion.",
+            },
+            auto_sanitize_spam: {
+              type: "boolean",
+              description:
+                "Automatically clean affiliate parameters, ALL-CAPS titles, and AI clichés for Reddit, Medium, and Quora before publishing.",
+            },
             scheduled_at: {
               type: "string",
               description:
@@ -127,6 +143,70 @@ export const TOOLS_DEFINITIONS = [
             project_id: {
               type: "string",
               description: "Optional project ID to associate with the post.",
+            },
+            api_key: {
+              type: "string",
+              description: "Optional Reeling API key.",
+            },
+          },
+        },
+      },
+      {
+        name: "reeling_discover_community_questions",
+        description:
+          "Discover daily Reddit threads and Quora questions matching target keywords & subreddits, and check the account's safe Cadence Guard counters (max 3 answers/day & max 3 top-level posts/week).",
+        inputSchema: {
+          type: "object",
+          properties: {
+            keywords: {
+              type: "array",
+              items: { type: "string" },
+              description: "Target topic keywords (e.g. ['AI video', 'social media marketing']).",
+            },
+            subreddits: {
+              type: "array",
+              items: { type: "string" },
+              description: "Optional subreddit names for Reddit search (e.g. ['SaaS', 'entrepreneur']).",
+            },
+            project_id: {
+              type: "string",
+              description: "Optional project ID.",
+            },
+            api_key: {
+              type: "string",
+              description: "Optional Reeling API key.",
+            },
+          },
+        },
+      },
+      {
+        name: "reeling_draft_community_answer",
+        description:
+          "Draft a value-first, non-spammy answer for a Reddit thread or Quora question, verified by Reeling's Spam Shield.",
+        inputSchema: {
+          type: "object",
+          required: ["platform", "question_title"],
+          properties: {
+            platform: {
+              type: "string",
+              enum: ["reddit", "quora"],
+              description: "Target platform ('reddit' or 'quora').",
+            },
+            question_title: {
+              type: "string",
+              description: "Title of the Reddit thread or Quora question.",
+            },
+            question_snippet: {
+              type: "string",
+              description: "Optional body snippet or context of the question.",
+            },
+            subreddit: {
+              type: "string",
+              description: "Optional subreddit name if platform is 'reddit'.",
+            },
+            project_context: {
+              type: "string",
+              description: "Optional domain expertise or background context.",
             },
             api_key: {
               type: "string",
@@ -460,6 +540,9 @@ export async function executeTool(name, args = {}, defaultApiKey = null) {
           title: args.title,
           subreddit: args.subreddit,
           tags: args.tags,
+          mode: args.mode,
+          target_url: args.target_url,
+          auto_sanitize_spam: args.auto_sanitize_spam,
           medium: args.medium,
           quora: args.quora,
           reddit: args.reddit,
@@ -472,6 +555,40 @@ export async function executeTool(name, args = {}, defaultApiKey = null) {
           project_id: args.project_id,
         };
         const res = await client.post("/api/v1/publish", payload);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(res.data, null, 2),
+            },
+          ],
+        };
+      }
+
+      case "reeling_discover_community_questions": {
+        const res = await client.post("/api/v1/community/discover", {
+          keywords: args.keywords,
+          subreddits: args.subreddits,
+          project_id: args.project_id,
+        });
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(res.data, null, 2),
+            },
+          ],
+        };
+      }
+
+      case "reeling_draft_community_answer": {
+        const res = await client.post("/api/v1/community/draft-answer", {
+          platform: args.platform,
+          questionTitle: args.question_title,
+          questionSnippet: args.question_snippet,
+          subreddit: args.subreddit,
+          projectContext: args.project_context,
+        });
         return {
           content: [
             {
