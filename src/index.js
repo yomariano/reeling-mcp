@@ -81,12 +81,12 @@ export const TOOLS_DEFINITIONS = [
               type: "array",
               items: { type: "string" },
               description:
-                "List of platform keys to publish to, e.g. ['tiktok', 'instagram', 'youtube', 'bluesky', 'threads', 'medium', 'quora', 'reddit'].",
+                "List of platform keys to publish to, e.g. ['x', 'tiktok', 'instagram', 'youtube', 'bluesky', 'threads', 'medium', 'quora', 'reddit'].",
             },
             video_url: {
               type: "string",
               description:
-                "Publicly accessible URL of the video file to publish (MP4, MOV, WebM). Optional when publishing text/article posts to Medium, Quora, or Reddit.",
+                "Publicly accessible URL of the video file to publish (MP4, MOV, WebM). Optional when publishing text/article posts to X, Medium, Quora, or Reddit.",
             },
             thumbnail_url: {
               type: "string",
@@ -463,6 +463,7 @@ export async function executeTool(name, args = {}, defaultApiKey = null) {
           medium: args.medium,
           quora: args.quora,
           reddit: args.reddit,
+          x: args.x || args.twitter,
           pinterest_board_id: args.pinterest_board_id,
           pinterest_link: args.pinterest_link,
           pinterest: args.pinterest,
