@@ -1,0 +1,12 @@
+{
+  "name": "reeling",
+  "version": "1.0.0",
+  "description": "Create faceless short-form videos, adapt captions, schedule and publish across 10+ social platforms (TikTok, Instagram Reels, YouTube Shorts, Threads, Bluesky, X, LinkedIn, Pinterest), and analyze cross-platform metrics.",
+  "author": {
+    "name": "Reeling",
+    "url": "https://reeling.app"
+  },
+  "homepage": "https://reeling.app",
+  "repository": "https://github.com/marianocodes/reeling",
+  "license": "MIT"
+}

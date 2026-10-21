@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "reeling": {
+      "type": "http",
+      "url": "https://mcp.reeling.app/mcp"
+    }
+  }
+}
