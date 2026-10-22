@@ -1,7 +1,7 @@
 {
   "name": "reeling-mcp",
-  "version": "1.0.1",
-  "description": "Official Model Context Protocol (MCP) Server for reeling.app",
+  "version": "1.1.0",
+  "description": "Official Model Context Protocol (MCP) Server for reeling.app — 15-channel social publishing, Reddit/Quora radar, spam shield & AI video storyboards",
   "homepage": "https://mcp.reeling.app/install",
   "repository": {
     "type": "git",
@@ -36,7 +36,13 @@
     "instagram",
     "youtube",
     "bluesky",
-    "threads"
+    "threads",
+    "reddit",
+    "quora",
+    "medium",
+    "x",
+    "linkedin",
+    "openclaw"
   ],
   "author": "reeling.app",
   "license": "MIT",

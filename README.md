@@ -11,37 +11,45 @@ Use Reeling from Claude Desktop, Cursor, Windsurf, OpenClaw, ChatGPT-compatible 
 
 This repository is the public developer companion for Reeling. It contains the MCP adapter; runnable API examples live in [reeling-examples](https://github.com/yomariano/reeling-examples); Reeling's private application, production infrastructure, customer data, and credentials are not part of this repository.
 
-**Links:** [Reeling homepage](https://reeling.app) · [Developer portal](https://reeling.app/developers) · [Hosted MCP install](https://mcp.reeling.app/install) · [API settings](https://reeling.app/settings?tab=api) · [Pricing](https://reeling.app/pricing) · [X: @yomariano05](https://x.com/yomariano05)
+**Links:** [Reeling homepage](https://reeling.app) · [AI Plugins & Skills Hub](https://reeling.app/plugins) · [15 Channel Integrations](https://reeling.app/integrations) · [Developer portal](https://reeling.app/developers) · [Hosted MCP install](https://mcp.reeling.app/install) · [API settings](https://reeling.app/settings?tab=api) · [Pricing](https://reeling.app/pricing)
 
 ---
 
-## Platform integrations
+## Platform integrations (15 supported channels)
 
-Availability depends on the connected account, app access and current capabilities. TikTok inbox delivery requires finishing in TikTok; check the [current platform matrix](https://reeling.app/developers) before publishing.
+Availability depends on the connected account, app access and current capabilities. TikTok inbox delivery requires finishing in TikTok; X (Companion mode), Reddit (Companion mode), Medium, and Quora use the [Reeling Companion Chrome extension](https://reeling.app/reeling-companion.zip) to bridge your authenticated browser session. Check the [current platform matrix](https://reeling.app/integrations) before publishing.
 
 - 🎵 **TikTok**
 - 📸 **Instagram Reels & Stories**
-- ▶️ **YouTube Shorts**
+- ▶️ **YouTube Shorts & Video**
 - 🦋 **Bluesky**
 - 🧵 **Threads**
 - 📌 **Pinterest**
 - 💼 **LinkedIn**
-- 🐦 **Twitter / X**
+- 🐦 **Twitter / X** (OAuth 2.0 or Free Companion Bridge)
+- 👽 **Reddit** (Companion Bridge or Script OAuth + Topic Radar & Spam Shield)
+- ❓ **Quora** (Companion Bridge + Question Radar & 75-Word Burden-of-Proof Shield)
+- ✍️ **Medium** (Companion Bridge + AI Cliché & Tag Shield)
+- 📘 **Facebook Pages**
 - 💬 **Discord & Telegram**
+- 🐘 **Mastodon**
 
 ---
 
-## 🛠️ Available MCP Tools
+## 🛠️ Available MCP Tools (16 Tools)
 
 | Tool Name | Description |
 |---|---|
 | `reeling_list_projects` | Lists all projects & workspaces in your Reeling account. |
-| `reeling_list_channels` | Lists all connected channels (YouTube, Bluesky, TikTok, Instagram, Threads, Pinterest, etc.) with handle names and account status. |
+| `reeling_list_channels` | Lists all connected channels across all 15 networks with handle names and account status. |
 | `reeling_get_channel_options` | Retrieves publishing options for a connected channel, such as Pinterest boards (ID, name, privacy) or TikTok creator options. |
-| `reeling_publish_post` | Publishes or schedules short-form video posts simultaneously to targeted platforms. |
+| `reeling_publish_post` | Publishes or schedules short-form videos, articles, or community answers across targeted platforms (includes Pre-Publish Spam Shield & 3/day, 3/week cadence guard). |
 | `reeling_get_post_status` | Checks delivery, processing, and publishing status for a specific post. |
+| `reeling_discover_community_questions` | Discovers high-intent daily questions on Reddit and Quora matching your topics and returns remaining daily/weekly cadence quota. |
+| `reeling_draft_community_answer` | Generates a value-first, non-promotional answer for a Reddit or Quora thread and evaluates its 0–100 Pre-Publish Spam & Shadowban score. |
 | `reeling_get_analytics` | Fetches aggregated analytics: total views, likes, comments, impressions, and per-platform breakdown. |
 | `reeling_sync_metrics` | Triggers a live sync against YouTube, Bluesky, Instagram, Threads, and TikTok APIs. |
+| `reeling_evaluate_content_jev` | Evaluates video scripts and captions using Reeling's JEV hook and retention diagnostics. |
 | `reeling_get_inbox` | Retrieves audience comments across social channels into a unified inbox. |
 | `reeling_reply_to_comment` | Posts a direct reply to a comment on any connected social platform. |
 | `reeling_adapt_content_ai` | Uses Reeling's AI copy engine to adapt a hook/script for TikTok, Instagram, YouTube, Threads, or Bluesky. |
@@ -61,7 +69,7 @@ Availability depends on the connected account, app access and current capabiliti
 2. **Run the server**:
 
    ```bash
-   npx -y github:yomariano/reeling-mcp#v1.0.1
+   npx -y github:yomariano/reeling-mcp#v1.1.0
    ```
 
    Or connect to the hosted Streamable HTTP endpoint at `https://mcp.reeling.app/mcp` using the [installation guide](https://mcp.reeling.app/install).
@@ -80,7 +88,7 @@ Add this to your `claude_desktop_config.json`:
   "mcpServers": {
     "reeling": {
       "command": "npx",
-      "args": ["-y", "github:yomariano/reeling-mcp#v1.0.1"],
+      "args": ["-y", "github:yomariano/reeling-mcp#v1.1.0"],
       "env": {
         "REELING_API_KEY": "rl_your_live_api_key_here",
         "REELING_API_URL": "https://api.reeling.app"
@@ -113,7 +121,7 @@ Create or edit `.cursor/mcp.json` in your project root:
   "mcpServers": {
     "reeling": {
       "command": "npx",
-      "args": ["-y", "github:yomariano/reeling-mcp#v1.0.1"],
+      "args": ["-y", "github:yomariano/reeling-mcp#v1.1.0"],
       "env": {
         "REELING_API_KEY": "rl_your_live_api_key_here"
       }
@@ -144,7 +152,7 @@ You can run `reeling-mcp` as a persistent Server-Sent Events (SSE) server for re
 
 ```bash
 # Run locally or deploy to Railway / Render / VPS / Docker
-npx -y github:yomariano/reeling-mcp#v1.0.1 --sse --port 3005
+npx -y github:yomariano/reeling-mcp#v1.1.0 --sse --port 3005
 ```
 
 Endpoints exposed:

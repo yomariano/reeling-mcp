@@ -12,7 +12,7 @@ const projectRoot = path.resolve(__dirname, "..");
 const repoRoot = path.resolve(projectRoot, "..");
 
 const MCP_URL = "https://mcp.reeling.app/mcp";
-const VERSION = "1.0.0";
+const VERSION = "1.1.0";
 const SKILL_NAME = "reeling-social";
 const TOOL_NAMES = TOOLS_DEFINITIONS.map((t) => t.name);
 
@@ -149,10 +149,10 @@ async function main() {
     name: "reeling",
     version: VERSION,
     description:
-      "Create faceless short-form videos, adapt captions, schedule and publish across 10+ social platforms (TikTok, Instagram Reels, YouTube Shorts, Threads, Bluesky, X, LinkedIn, Pinterest), and analyze cross-platform metrics.",
+      "Create faceless short-form videos, discover Reddit & Quora questions, run pre-publish spam checks, and schedule across 15 social & community platforms (TikTok, Instagram, YouTube, Threads, Bluesky, X, Reddit, Quora, Medium, LinkedIn, Pinterest, Facebook, Telegram, Discord, Mastodon).",
     author: { name: "Reeling", url: "https://reeling.app" },
-    homepage: "https://reeling.app",
-    repository: "https://github.com/marianocodes/reeling",
+    homepage: "https://reeling.app/plugins",
+    repository: "https://github.com/yomariano/reeling-mcp",
     license: "MIT",
   };
 

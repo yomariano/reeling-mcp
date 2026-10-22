@@ -1,13 +1,15 @@
 {
   "name": "reeling",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "mcpUrl": "https://mcp.reeling.app/mcp",
   "transport": "streamable-http",
-  "toolsCount": 14,
+  "toolsCount": 16,
   "tools": [
     "reeling_list_projects",
     "reeling_list_channels",
     "reeling_publish_post",
+    "reeling_discover_community_questions",
+    "reeling_draft_community_answer",
     "reeling_get_channel_options",
     "reeling_get_post_status",
     "reeling_get_analytics",
@@ -27,12 +29,12 @@
   },
   "files": {
     "reeling-openai.zip": {
-      "sha256": "3e59ddb40a63f5fdac0150af7f3b51fe8faea8e9aeb6a73aeb537709e781d9eb",
-      "bytes": 16932
+      "sha256": "49061fdf8d7d8e3f4a446813b9d1bd099d3172f7cc0a483291be363357ae080e",
+      "bytes": 17011
     },
     "reeling-claude.zip": {
-      "sha256": "27deb7f31c011cd5f377626d9b4e05580f0a3c76d20d348f8b4bd1707f8ee173",
-      "bytes": 2115
+      "sha256": "dc6b355ed48fea0b668ec7e5bf07e3c68160cd13bfd63104745ac98bf6d8de1e",
+      "bytes": 2166
     }
   }
 }

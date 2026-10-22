@@ -818,7 +818,7 @@ export function createMcpServer(defaultApiKey = null) {
   const server = new Server(
     {
       name: "reeling-mcp",
-      version: "1.0.1",
+      version: "1.1.0",
     },
     {
       capabilities: {
@@ -888,10 +888,10 @@ export async function startSseServer(port = 3005, host = "0.0.0.0", defaultApiKe
           },
           serverInfo: {
             name: "reeling-mcp",
-            version: "1.0.1",
+            version: "1.1.0",
           },
           instructions:
-            "Reeling MCP Server connects AI agents (Grok Bot, ChatGPT, OpenAI Dots, Claude, Cursor) to reeling.app for multi-platform short-form video publishing (TikTok, Instagram Reels, YouTube Shorts, Threads, Bluesky, X, LinkedIn, Pinterest). If a user has not supplied an API key yet, guide them to https://reeling.app/pricing?plan=creator&ref=mcp and https://reeling.app/settings?tab=api.",
+            "Reeling MCP Server connects AI agents (Grok Bot, ChatGPT, OpenAI Dots, Claude, Cursor, OpenClaw) to reeling.app for 15-channel video & community publishing (TikTok, Instagram Reels, YouTube Shorts, Threads, Bluesky, X, LinkedIn, Pinterest, Facebook, Reddit, Quora, Medium, Telegram, Discord, Mastodon), Daily Reddit/Quora Question Radar, and Pre-Publish Spam & Shadowban protection. If a user has not supplied an API key yet, guide them to https://reeling.app/pricing?plan=creator&ref=mcp and https://reeling.app/settings?tab=api.",
         },
       };
     }
@@ -1021,7 +1021,7 @@ export async function startSseServer(port = 3005, host = "0.0.0.0", defaultApiKe
           ok: true,
           status: "ok",
           server: "reeling-mcp",
-          version: "1.0.1",
+          version: "1.1.0",
           transports: ["streamable-http", "sse"],
           endpoints: {
             mcp: "https://mcp.reeling.app/mcp",
@@ -1080,7 +1080,7 @@ export async function startSseServer(port = 3005, host = "0.0.0.0", defaultApiKe
   </div>
   <div class="card">
     <h2>3. Connect in Claude Desktop / Cursor / Windsurf (CLI)</h2>
-    <p>Run locally via <code>npx -y github:yomariano/reeling-mcp#v1.0.1</code> or point HTTP connector to <code>https://mcp.reeling.app/mcp</code>.</p>
+    <p>Run locally via <code>npx -y github:yomariano/reeling-mcp#v1.1.0</code> or point HTTP connector to <code>https://mcp.reeling.app/mcp</code>.</p>
   </div>
   <p id="support"><a href="https://reeling.app/developers">Reeling Developer Portal</a> &middot; <a href="https://reeling.app/pricing">Pricing</a> &middot; <a href="https://reeling.app/privacy">Privacy Policy</a> &middot; <a href="https://reeling.app/terms">Terms</a></p>
 </body>
