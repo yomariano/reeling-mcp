@@ -7,6 +7,8 @@
   "transport": "streamable-http",
   "authentication": "api_key_or_bearer",
   "tools": [
+    "reeling_get_platform_matrix",
+    "reeling_check_spam_score",
     "reeling_list_projects",
     "reeling_list_channels",
     "reeling_publish_post",

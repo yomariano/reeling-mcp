@@ -32,8 +32,125 @@ function getClient(overrideKey, fallbackKey) {
   });
 }
 
+// Public discovery helpers (callable without REELING_API_KEY)
+const PUBLIC_PLATFORM_MATRIX = [
+  { key: "youtube", name: "YouTube Shorts & Long-Form", auth: "Google OAuth 2.0", limits: "256 MiB video, 100 char title, 5,000 char description", inbox: true, analytics: true },
+  { key: "tiktok", name: "TikTok", auth: "TikTok OAuth 2.0", limits: "100 MiB video, 2,200 char caption", inbox: true, analytics: true },
+  { key: "instagram", name: "Instagram Reels & Feed", auth: "Meta Graph OAuth 2.0", limits: "100 MiB video, 2,200 char caption", inbox: true, analytics: true },
+  { key: "facebook", name: "Facebook Pages & Reels", auth: "Meta Graph OAuth 2.0", limits: "100 MiB video, 63,206 char post", inbox: true, analytics: true },
+  { key: "linkedin", name: "LinkedIn Profiles & Company Pages", auth: "LinkedIn OAuth 2.0", limits: "100 MiB video, 3,000 char post", inbox: true, analytics: true },
+  { key: "threads", name: "Threads", auth: "Meta Threads OAuth 2.0", limits: "100 MiB video, 500 char post", inbox: true, analytics: true },
+  { key: "pinterest", name: "Pinterest Video & Image Pins", auth: "Pinterest OAuth 2.0", limits: "100 MiB video, 100 char title, 500 char description", inbox: true, analytics: true },
+  { key: "bluesky", name: "Bluesky", auth: "Bluesky App Password (AT Protocol)", limits: "50 MiB video, 300 char post", inbox: true, analytics: true },
+  { key: "x", name: "X (Twitter)", auth: "Reeling Companion Chrome Extension (Free) or X OAuth 2.0 BYOK", limits: "100 MiB video, 280 char post (or long-form on X Premium)", inbox: false, analytics: false },
+  { key: "reddit", name: "Reddit", auth: "Reeling Companion Chrome Extension (Free) or Reddit Script OAuth", limits: "100 MiB video or text post, 300 char title, Pre-Publish Spam & AutoModerator Shield", inbox: false, analytics: false },
+  { key: "quora", name: "Quora", auth: "Reeling Companion Chrome Extension (Free)", limits: "Question answers & Space posts, Pre-Publish Spam & Self-Promo Shield", inbox: false, analytics: false },
+  { key: "medium", name: "Medium", auth: "Reeling Companion Chrome Extension (Free) or Medium Token", limits: "Markdown/HTML articles with canonical URL & up to 5 topic tags", inbox: false, analytics: false },
+  { key: "telegram", name: "Telegram Channels & Groups", auth: "Telegram Bot Token", limits: "50 MiB Bot API video, 1,024 char media caption / 4,096 char text", inbox: false, analytics: false },
+  { key: "discord", name: "Discord Webhooks", auth: "Discord Channel Webhook URL", limits: "25 MiB default webhook upload, 2,000 char message", inbox: false, analytics: false },
+  { key: "mastodon", name: "Mastodon & Fediverse", auth: "Instance Access Token", limits: "40–99 MiB instance-dependent video, 500 char default post", inbox: true, analytics: true },
+];
+
+function evaluatePublicSpamScore({ platform = "reddit", title = "", content = "" }) {
+  const combined = `${title}\n${content}`;
+  const triggers = [];
+  let penalty = 0;
+
+  if (/\b(?:bit\.ly|tinyurl\.com|t\.co|goo\.gl|ow\.ly|is\.gd|buff\.ly|adf\.ly|shorte\.st|cutt\.ly|rb\.gy|amzn\.to)\b/i.test(combined)) {
+    triggers.push({ id: "url_shortener", severity: "critical", penalty: 45, message: "Banned URL shortener detected (triggers immediate Reddit AutoModerator & Quora spam removal)." });
+    penalty += 45;
+  }
+  if (/[?&](?:utm_[a-z_]+|ref|aff|affiliate|partner|tag|click_id|fbclid|gclid)=/i.test(combined)) {
+    triggers.push({ id: "affiliate_params", severity: "high", penalty: 25, message: "Affiliate or tracking query parameters detected (?utm_*, ?ref=, ?aff=)." });
+    penalty += 25;
+  }
+  const links = combined.match(/https?:\/\/[^\s)]+/gi) || [];
+  if (links.length >= 2) {
+    triggers.push({ id: "multiple_links", severity: "medium", penalty: 20, message: `Contains ${links.length} outbound links (community posts with 2+ external links face elevated spam filtering).` });
+    penalty += 20;
+  }
+  if (/\b(?:upvote if|please upvote|smash that upvote|dm me for|link in bio|check out my|limited time offer|act now|100% free|guaranteed results)\b/i.test(combined)) {
+    triggers.push({ id: "vote_or_promo_bait", severity: "high", penalty: 30, message: "Promotional or vote-solicitation phrasing detected." });
+    penalty += 30;
+  }
+  const capsWords = (title.match(/\b[A-Z]{4,}\b/g) || []).filter((w) => !["SAAS", "REST", "JSON", "HTML", "CORS", "HTTP", "API", "DKIM", "SPF", "DMARC"].includes(w));
+  if (capsWords.length >= 2) {
+    triggers.push({ id: "all_caps_title", severity: "medium", penalty: 15, message: `Multiple ALL-CAPS words in title (${capsWords.join(", ")}).` });
+    penalty += 15;
+  }
+  if (/\b(?:delve into|testament to|tapestry of|game-changer|in today's fast-paced digital world|unlock the power of)\b/i.test(combined)) {
+    triggers.push({ id: "ai_cliches", severity: "low", penalty: 10, message: "Generic AI cliché phrasing detected that moderators frequently flag as low-effort bot content." });
+    penalty += 10;
+  }
+
+  const safetyScore = Math.max(0, 100 - penalty);
+  const cleanedTitle = String(title || "").replace(/\b([A-Z])([A-Z]{3,})\b/g, (m, first, rest) =>
+    ["SAAS", "REST", "JSON", "HTML", "CORS", "HTTP", "API"].includes(m) ? m : first + rest.toLowerCase()
+  );
+  const cleanedContent = String(content || "").replace(
+    /(https?:\/\/[^\s?#)]+)\?([^\s)]+)/gi,
+    (full, base, query) => {
+      const kept = query
+        .split("&")
+        .filter((pair) => !/^(?:utm_[a-z_]+|ref|aff|affiliate|partner|tag|click_id|fbclid|gclid)=/i.test(pair));
+      return kept.length ? `${base}?${kept.join("&")}` : base;
+    }
+  );
+
+  return {
+    platform,
+    safety_score: safetyScore,
+    status: safetyScore >= 80 ? "safe" : safetyScore >= 50 ? "caution" : "high_risk",
+    triggers,
+    cleaned_title: cleanedTitle,
+    cleaned_content: cleanedContent,
+    cadence_recommendation: "Max 3 community answers/day and max 3 top-level posts/week with a 9:1 value-to-link ratio.",
+    markdown_badge: `[![Spam Safety Score: ${safetyScore}/100 — Verified by Reeling](https://img.shields.io/badge/Spam_Safety_Score-${safetyScore}%2F100-10b981?style=flat-square&logo=shield&logoColor=white)](https://reeling.app/tools/social-spam-checker)`,
+    web_tool_url: "https://reeling.app/tools/social-spam-checker",
+  };
+}
+
 // Tool specifications list
 export const TOOLS_DEFINITIONS = [
+      {
+        name: "reeling_get_platform_matrix",
+        description:
+          "PUBLIC DISCOVERY TOOL (No API key required): Returns Reeling's 15 supported social and community platforms, authentication methods (Direct OAuth 2.0 vs free Reeling Companion Chrome Extension), file/character limits, and pricing tiers.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            platform: {
+              type: "string",
+              description: "Optional platform key filter (e.g. 'reddit', 'tiktok', 'youtube', 'x', 'quora', 'medium').",
+            },
+          },
+        },
+      },
+      {
+        name: "reeling_check_spam_score",
+        description:
+          "PUBLIC DISCOVERY TOOL (No API key required): Evaluates a draft title and post body against Reeling's Pre-Publish Spam & AutoModerator Shield for Reddit, Quora, Medium, LinkedIn, or X. Returns a 0–100 safety_score, specific trigger explanations, auto-sanitized copy, and a shareable verification badge.",
+        inputSchema: {
+          type: "object",
+          required: ["content"],
+          properties: {
+            platform: {
+              type: "string",
+              enum: ["reddit", "quora", "medium", "linkedin", "x"],
+              default: "reddit",
+              description: "Target community or social platform.",
+            },
+            title: {
+              type: "string",
+              description: "Optional post title or headline (important for Reddit and Medium).",
+            },
+            content: {
+              type: "string",
+              description: "Draft post body, comment, or answer to inspect.",
+            },
+          },
+        },
+      },
       {
         name: "reeling_list_projects",
         description: "List all projects / workspaces available in your reeling.app account.",
@@ -500,6 +617,53 @@ export const TOOLS_DEFINITIONS = [
 
 // Handle tool executions
 export async function executeTool(name, args = {}, defaultApiKey = null) {
+  if (name === "reeling_get_platform_matrix") {
+    const filter = (args.platform || "").trim().toLowerCase();
+    const platforms = filter
+      ? PUBLIC_PLATFORM_MATRIX.filter(
+          (p) => p.key === filter || p.name.toLowerCase().includes(filter)
+        )
+      : PUBLIC_PLATFORM_MATRIX;
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(
+            {
+              total_supported_platforms: PUBLIC_PLATFORM_MATRIX.length,
+              platforms,
+              pricing: {
+                starter: "$2.99/mo (or $2.39/mo billed yearly) — 7 social accounts, 60 scheduled posts/month",
+                creator: "$5.99/mo (or $4.79/mo billed yearly) — 15 social accounts, unlimited scheduling, full REST API & 18-tool MCP server",
+                agency: "$12.99/mo (or $10.39/mo billed yearly) — 50 social accounts, 10 workspaces, priority webhooks",
+              },
+              docs_url: "https://reeling.app/integrations",
+              plugins_url: "https://reeling.app/plugins",
+            },
+            null,
+            2
+          ),
+        },
+      ],
+    };
+  }
+
+  if (name === "reeling_check_spam_score") {
+    const result = evaluatePublicSpamScore({
+      platform: args.platform || "reddit",
+      title: args.title || "",
+      content: args.content || "",
+    });
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(result, null, 2),
+        },
+      ],
+    };
+  }
+
   const client = getClient(args.api_key, defaultApiKey);
 
   try {

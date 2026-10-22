@@ -3,8 +3,10 @@
   "version": "1.1.0",
   "mcpUrl": "https://mcp.reeling.app/mcp",
   "transport": "streamable-http",
-  "toolsCount": 16,
+  "toolsCount": 18,
   "tools": [
+    "reeling_get_platform_matrix",
+    "reeling_check_spam_score",
     "reeling_list_projects",
     "reeling_list_channels",
     "reeling_publish_post",
@@ -29,11 +31,11 @@
   },
   "files": {
     "reeling-openai.zip": {
-      "sha256": "49061fdf8d7d8e3f4a446813b9d1bd099d3172f7cc0a483291be363357ae080e",
+      "sha256": "a0c242eb25d3fdefa524e9e153f1c779c0999b376094c536cac511fba33e2e64",
       "bytes": 17011
     },
     "reeling-claude.zip": {
-      "sha256": "dc6b355ed48fea0b668ec7e5bf07e3c68160cd13bfd63104745ac98bf6d8de1e",
+      "sha256": "3c0d2782e8a588a5398c31c60d4e4c59e9a19dda37b16a67da066ff35c6616a1",
       "bytes": 2166
     }
   }

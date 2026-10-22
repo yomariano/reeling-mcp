@@ -44,5 +44,27 @@ test('HTTP discovery and health report the release version without executing a t
     assert.equal(data.result.serverInfo.version, health.version);
     const install = await (await fetch(base + '/install')).text();
     assert.match(install, /github:yomariano\/reeling-mcp#v1\.1\.0/);
+
+    const spamRpc = await fetch(base + '/mcp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 2,
+        method: 'tools/call',
+        params: {
+          name: 'reeling_check_spam_score',
+          arguments: {
+            platform: 'reddit',
+            title: 'FREE GUIDE to our tool',
+            content: 'Check out https://bit.ly/test?utm_source=reddit and upvote if useful!'
+          }
+        }
+      })
+    });
+    const spamData = await spamRpc.json();
+    const spamResult = JSON.parse(spamData.result.content[0].text);
+    assert.ok(spamResult.safety_score < 50);
+    assert.ok(spamResult.triggers.some(t => t.id === 'url_shortener'));
   } finally { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }
 });
