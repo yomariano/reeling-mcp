@@ -299,19 +299,19 @@ export const TOOLS_DEFINITIONS = [
       {
         name: "reeling_draft_community_answer",
         description:
-          "Draft a value-first, non-spammy answer for a Reddit thread or Quora question, verified by Reeling's Spam Shield.",
+          "Draft a value-first, humanized community reply for X, Reddit (100% Reply-Only), or Quora using Stealth Anti-Sell Mention, Smart Mix, or 100% Pure Karma Help.",
         inputSchema: {
           type: "object",
           required: ["platform", "question_title"],
           properties: {
             platform: {
               type: "string",
-              enum: ["reddit", "quora"],
-              description: "Target platform ('reddit' or 'quora').",
+              enum: ["x", "reddit", "quora"],
+              description: "Target platform ('x', 'reddit', or 'quora').",
             },
             question_title: {
               type: "string",
-              description: "Title of the Reddit thread or Quora question.",
+              description: "Title of the X post, Reddit thread, or Quora question.",
             },
             question_snippet: {
               type: "string",
@@ -321,9 +321,82 @@ export const TOOLS_DEFINITIONS = [
               type: "string",
               description: "Optional subreddit name if platform is 'reddit'.",
             },
+            project_id: {
+              type: "string",
+              description: "Optional project UUID.",
+            },
             project_context: {
               type: "string",
-              description: "Optional domain expertise or background context.",
+              description: "Optional project name and background context.",
+            },
+            reply_style: {
+              type: "string",
+              enum: ["stealth_anti_sell", "smart_mix", "pure_karma"],
+              description: "Reply mode: 'stealth_anti_sell' (85% help + hidden middle mention), 'smart_mix' (60% stealth / 40% pure help), or 'pure_karma' (100% pure help).",
+            },
+            api_key: {
+              type: "string",
+              description: "Optional Reeling API key.",
+            },
+          },
+        },
+      },
+      {
+        name: "reeling_schedule_community_autopilot",
+        description:
+          "Schedule 3 daily Reply-Only Reddit comments per day on autopilot (default 7 days = 21 replies: 1 Pure Karma + 2 Hidden Anti-Sell Mentions/day) across target subreddits and keywords.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            project_id: {
+              type: "string",
+              description: "Project UUID to schedule daily autopilot replies for.",
+            },
+            project_name: {
+              type: "string",
+              description: "Project or brand name (e.g. 'VoiceFleet.ai', 'Reeling.app', 'Unrust.dev').",
+            },
+            keywords: {
+              type: "array",
+              items: { type: "string" },
+              description: "Target niche keywords to match daily threads.",
+            },
+            subreddits: {
+              type: "array",
+              items: { type: "string" },
+              description: "Target subreddits (e.g. ['smallbusiness', 'entrepreneur', 'SaaS']).",
+            },
+            days: {
+              type: "number",
+              description: "Number of days to schedule (default: 7).",
+            },
+            replies_per_day: {
+              type: "number",
+              description: "Replies per day (default: 3).",
+            },
+            api_key: {
+              type: "string",
+              description: "Optional Reeling API key.",
+            },
+          },
+        },
+      },
+      {
+        name: "reeling_humanize_content",
+        description:
+          "Run Reeling's 2-Pass Wikipedia 24-Pattern AI Slop Humanizer on a social or community draft to strip AI tells, SaaS-bro phrases, em-dashes, and air-quotes.",
+        inputSchema: {
+          type: "object",
+          required: ["text"],
+          properties: {
+            text: {
+              type: "string",
+              description: "Draft text to humanize.",
+            },
+            platform: {
+              type: "string",
+              enum: ["x", "reddit", "quora", "general"],
+              description: "Target platform ('x' enforces <250 chars; 'reddit' uses lowercase-friendly anti-sell voice).",
             },
             api_key: {
               type: "string",
@@ -751,7 +824,44 @@ export async function executeTool(name, args = {}, defaultApiKey = null) {
           questionTitle: args.question_title,
           questionSnippet: args.question_snippet,
           subreddit: args.subreddit,
+          projectId: args.project_id,
           projectContext: args.project_context,
+          replyStyle: args.reply_style || "stealth_anti_sell",
+          includeBrandMention: args.reply_style !== "pure_karma",
+        });
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(res.data, null, 2),
+            },
+          ],
+        };
+      }
+
+      case "reeling_schedule_community_autopilot": {
+        const res = await client.post("/api/v1/community/autopilot", {
+          projectId: args.project_id,
+          projectName: args.project_name,
+          keywords: args.keywords,
+          subreddits: args.subreddits,
+          days: args.days || 7,
+          repliesPerDay: args.replies_per_day || 3,
+        });
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(res.data, null, 2),
+            },
+          ],
+        };
+      }
+
+      case "reeling_humanize_content": {
+        const res = await client.post("/api/v1/community/humanize", {
+          text: args.text,
+          platform: args.platform || "reddit",
         });
         return {
           content: [
