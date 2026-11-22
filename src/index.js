@@ -34,21 +34,21 @@ function getClient(overrideKey, fallbackKey) {
 
 // Public discovery helpers (callable without REELING_API_KEY)
 const PUBLIC_PLATFORM_MATRIX = [
-  { key: "youtube", name: "YouTube Shorts & Long-Form", auth: "Google OAuth 2.0", limits: "256 MiB video, 100 char title, 5,000 char description", inbox: true, analytics: true },
-  { key: "tiktok", name: "TikTok", auth: "TikTok OAuth 2.0", limits: "100 MiB video, 2,200 char caption", inbox: true, analytics: true },
-  { key: "instagram", name: "Instagram Reels & Feed", auth: "Meta Graph OAuth 2.0", limits: "100 MiB video, 2,200 char caption", inbox: true, analytics: true },
-  { key: "facebook", name: "Facebook Pages & Reels", auth: "Meta Graph OAuth 2.0", limits: "100 MiB video, 63,206 char post", inbox: true, analytics: true },
-  { key: "linkedin", name: "LinkedIn Profiles & Company Pages", auth: "LinkedIn OAuth 2.0", limits: "100 MiB video, 3,000 char post", inbox: true, analytics: true },
-  { key: "threads", name: "Threads", auth: "Meta Threads OAuth 2.0", limits: "100 MiB video, 500 char post", inbox: true, analytics: true },
-  { key: "pinterest", name: "Pinterest Video & Image Pins", auth: "Pinterest OAuth 2.0", limits: "100 MiB video, 100 char title, 500 char description", inbox: true, analytics: true },
-  { key: "bluesky", name: "Bluesky", auth: "Bluesky App Password (AT Protocol)", limits: "50 MiB video, 300 char post", inbox: true, analytics: true },
-  { key: "x", name: "X (Twitter)", auth: "Reeling Companion Chrome Extension (Free) or X OAuth 2.0 BYOK", limits: "100 MiB video, 280 char post (or long-form on X Premium)", inbox: false, analytics: false },
+  { key: "youtube", name: "YouTube", auth: "Google OAuth 2.0", limits: "100 MiB video (MP4, MOV or WebM), 100 char title, 5,000 char description", inbox: true, analytics: true },
+  { key: "tiktok", name: "TikTok", auth: "TikTok OAuth 2.0", limits: "100 MiB video (MP4, MOV or WebM), 2,200 char caption", inbox: false, analytics: false },
+  { key: "instagram", name: "Instagram Reels", auth: "Meta Graph OAuth 2.0", limits: "100 MiB Reels video (MP4 or MOV, Business/Creator accounts), 2,200 char caption", inbox: true, analytics: true },
+  { key: "facebook", name: "Facebook Pages", auth: "Meta Graph OAuth 2.0", limits: "100 MiB video (MP4 or MOV), 5,000 char description", inbox: false, analytics: false },
+  { key: "linkedin", name: "LinkedIn", auth: "LinkedIn OAuth 2.0", limits: "100 MiB video (MP4, MOV or WebM)", inbox: false, analytics: false },
+  { key: "threads", name: "Threads", auth: "Meta Threads OAuth 2.0", limits: "100 MiB video (MP4 or MOV), 500 char post", inbox: false, analytics: true },
+  { key: "pinterest", name: "Pinterest Video Pins", auth: "Pinterest OAuth 2.0", limits: "100 MiB video (MP4 or MOV), 100 char title, 500 char description", inbox: false, analytics: false },
+  { key: "bluesky", name: "Bluesky", auth: "Bluesky App Password (AT Protocol)", limits: "50 MiB video (MP4, MOV or WebM), 300 char post", inbox: true, analytics: true },
+  { key: "x", name: "X (Twitter)", auth: "Reeling Companion Chrome Extension (Free) or X OAuth 2.0 BYOK", limits: "280 weighted chars (or up to 25,000 on X Premium via Companion)", inbox: false, analytics: false },
   { key: "reddit", name: "Reddit", auth: "Reeling Companion Chrome Extension (Free) or Reddit Script OAuth", limits: "100 MiB video or text post, 300 char title, Pre-Publish Spam & AutoModerator Shield", inbox: false, analytics: false },
-  { key: "quora", name: "Quora", auth: "Reeling Companion Chrome Extension (Free)", limits: "Question answers & Space posts, Pre-Publish Spam & Self-Promo Shield", inbox: false, analytics: false },
-  { key: "medium", name: "Medium", auth: "Reeling Companion Chrome Extension (Free) or Medium Token", limits: "Markdown/HTML articles with canonical URL & up to 5 topic tags", inbox: false, analytics: false },
-  { key: "telegram", name: "Telegram Channels & Groups", auth: "Telegram Bot Token", limits: "50 MiB Bot API video, 1,024 char media caption / 4,096 char text", inbox: false, analytics: false },
-  { key: "discord", name: "Discord Webhooks", auth: "Discord Channel Webhook URL", limits: "25 MiB default webhook upload, 2,000 char message", inbox: false, analytics: false },
-  { key: "mastodon", name: "Mastodon & Fediverse", auth: "Instance Access Token", limits: "40–99 MiB instance-dependent video, 500 char default post", inbox: true, analytics: true },
+  { key: "quora", name: "Quora", auth: "Reeling Companion Chrome Extension (Free)", limits: "Standalone posts, answers & shares (75+ words recommended with external links), Pre-Publish Spam Shield", inbox: false, analytics: false },
+  { key: "medium", name: "Medium", auth: "Reeling Companion Chrome Extension (Free) or Medium Token", limits: "Full-length Markdown/HTML stories & articles, up to 5 topic tags, Pre-Publish AI Cliché Shield", inbox: false, analytics: false },
+  { key: "telegram", name: "Telegram", auth: "Telegram Bot Token", limits: "50 MiB Bot API video (MP4, MOV or WebM), 1,024 char caption", inbox: false, analytics: false },
+  { key: "discord", name: "Discord", auth: "Discord Channel Webhook URL", limits: "25 MiB default webhook upload, 2,000 char message", inbox: false, analytics: false },
+  { key: "mastodon", name: "Mastodon", auth: "Instance Access Token", limits: "40 MiB conservative video cap, 500 char status", inbox: false, analytics: false },
 ];
 
 function evaluatePublicSpamScore({ platform = "reddit", title = "", content = "" }) {
@@ -260,6 +260,11 @@ export const TOOLS_DEFINITIONS = [
             project_id: {
               type: "string",
               description: "Optional project ID to associate with the post.",
+            },
+            channel_ids: {
+              type: "array",
+              items: { type: "string" },
+              description: "Optional array of connected channel UUIDs to target specific accounts within the project.",
             },
             api_key: {
               type: "string",
@@ -706,9 +711,9 @@ export async function executeTool(name, args = {}, defaultApiKey = null) {
               total_supported_platforms: PUBLIC_PLATFORM_MATRIX.length,
               platforms,
               pricing: {
-                starter: "$2.99/mo (or $2.39/mo billed yearly) — 7 social accounts, 60 scheduled posts/month",
-                creator: "$5.99/mo (or $4.79/mo billed yearly) — 15 social accounts, unlimited scheduling, full REST API & 18-tool MCP server",
-                agency: "$12.99/mo (or $10.39/mo billed yearly) — 50 social accounts, 10 workspaces, priority webhooks",
+                starter: "$9/mo ($89/yr) — 1 project workspace, 5 connected channels, 60 scheduled posts/month, Local Companion Chrome Extension, Pre-Publish Spam Shield",
+                creator: "$19/mo ($189/yr) — 3 project workspaces, up to 15 connected channels, unlimited scheduled posts, full REST API & 20-tool MCP server, Unified Social Inbox",
+                agency: "$39/mo ($379/yr) — 10 project workspaces, up to 30 connected channels, unlimited scheduled posts, includes 1x 24/7 Cloud Companion Browser, team approval workflows, signed webhooks, full REST API & 20-tool MCP server",
               },
               docs_url: "https://reeling.app/integrations",
               plugins_url: "https://reeling.app/plugins",
@@ -790,6 +795,7 @@ export async function executeTool(name, args = {}, defaultApiKey = null) {
           scheduled_for: args.scheduled_at || args.scheduled_for,
           scheduled_at: args.scheduled_at || args.scheduled_for,
           project_id: args.project_id,
+          ...(Array.isArray(args.channel_ids) ? { channel_ids: args.channel_ids } : {}),
         };
         const res = await client.post("/api/v1/publish", payload);
         return {
